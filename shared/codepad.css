@@ -1,0 +1,126 @@
+/* Codepad: a VS Code look-alike that types and runs JS + Python on a slide.
+   Used by shared/codepad.js. Colors follow VS Code "Dark Modern". */
+.vscode {
+  --vs-bg: #1f1f1f; --vs-side: #181818; --vs-border: #2b2b2b; --vs-text: #cccccc; --vs-dim: #9d9d9d;
+  --vs-blue: #0078d4; --vs-line: #6e7681; --vs-sel: #264f78;
+  --vs-font: 18px; --vs-lh: 26px;
+  display: flex; flex-direction: column; flex: 1; min-height: 0;
+  background: var(--vs-bg); color: var(--vs-text); border-radius: 10px; overflow: hidden;
+  border: 1px solid #000; box-shadow: 0 14px 40px rgb(0 0 0 / .35);
+  font-family: var(--body);
+}
+.vscode * { box-sizing: border-box; }
+.vs-title { height: 30px; flex: none; display: flex; align-items: center; background: var(--vs-side); border-bottom: 1px solid var(--vs-border); font: 13px var(--body); color: var(--vs-dim); position: relative; }
+.vs-title .dots { display: flex; gap: 8px; padding-left: 14px; }
+.vs-title .dots i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; }
+.vs-title .dots i:nth-child(2) { background: #febc2e; } .vs-title .dots i:nth-child(3) { background: #28c840; }
+.vs-title .name { position: absolute; left: 50%; transform: translateX(-50%); }
+.vs-main { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+.vs-act { width: 46px; flex: none; background: var(--vs-side); border-right: 1px solid var(--vs-border); display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 12px; }
+.vs-act svg { width: 24px; height: 24px; stroke: #868686; fill: none; stroke-width: 1.6; }
+.vs-act svg.on { stroke: #d7d7d7; }
+.vs-exp { width: 200px; flex: none; background: var(--vs-side); border-right: 1px solid var(--vs-border); font-size: 15px; overflow: hidden; }
+.vs-exp .h { font: 12px var(--body); letter-spacing: .06em; color: var(--vs-dim); padding: 10px 18px 8px; }
+.vs-exp .folder { font-weight: 700; font-size: 13px; padding: 3px 10px; color: var(--vs-text); letter-spacing: .03em; }
+.vs-exp .f { display: flex; align-items: center; gap: 7px; padding: 2px 10px 2px 26px; white-space: nowrap; color: var(--vs-text); }
+.vs-exp .f.cur { background: #37373d; }
+.vs-exp .f.new::after { content: 'U'; margin-left: auto; color: #73c991; font-size: 12px; }
+.ficon { font: 700 10px var(--mono); width: 18px; text-align: center; flex: none; }
+.ficon.js { color: #cbcb41; } .ficon.py { color: #3b8eea; }
+.vs-groups { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; }
+.vs-group { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border-left: 1px solid var(--vs-border); }
+.vs-group:first-child { border-left: 0; }
+.vs-tabs { height: 36px; flex: none; display: flex; background: var(--vs-side); border-bottom: 1px solid var(--vs-border); }
+.vs-tab { display: flex; align-items: center; gap: 8px; padding: 0 14px; background: var(--vs-bg); border-top: 2px solid var(--vs-blue); font-size: 14px; color: #fff; }
+.vs-tab .x { color: var(--vs-dim); margin-left: 6px; }
+.vs-run { margin-left: auto; align-self: center; margin-right: 10px; background: none; border: 0; color: #89d185; font: 14px var(--body); cursor: pointer; padding: 4px 8px; border-radius: 4px; display: flex; gap: 6px; align-items: center; }
+.vs-run:hover { background: #2a2d2e; }
+.vs-run svg { width: 14px; height: 14px; fill: #89d185; }
+.vs-crumb { height: 24px; flex: none; font: 13px var(--body); color: var(--vs-dim); padding: 3px 16px; }
+.vs-code { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: flex-start; scrollbar-width: thin; scrollbar-color: #424242 transparent; }
+.vs-gutter { position: sticky; left: 0; flex: none; min-width: 46px; padding: 4px 12px var(--vs-padb, 40px) 0; text-align: right; font: var(--vs-font)/var(--vs-lh) var(--mono); color: var(--vs-line); background: var(--vs-bg); user-select: none; z-index: 1; }
+.vs-gutter .on { color: var(--vs-text); }
+.vs-wrap { position: relative; flex: 1; min-width: 0; }
+.vs-hl, .vs-ta {
+  font: var(--vs-font)/var(--vs-lh) var(--mono); tab-size: 4; white-space: pre; margin: 0;
+  padding: 4px 16px var(--vs-padb, 40px) 8px; letter-spacing: 0; border: 0; background: none; border-radius: 0;
+  overflow: hidden; color: #d4d4d4;
+}
+.vs-hl { min-height: 100%; }
+.vs-ta { position: absolute; inset: 0; width: 100%; height: 100%; resize: none; outline: none; color: transparent; caret-color: #aeafad; -webkit-text-fill-color: transparent; }
+.vs-ta::selection { background: var(--vs-sel); -webkit-text-fill-color: transparent; }
+.vs-hl .ln-flash { background: rgb(255 231 106 / .14); display: inline-block; min-width: 100%; }
+.vs-caret { display: inline-block; width: 2px; height: var(--vs-lh); margin-bottom: calc(var(--vs-lh) * -0.25); background: #aeafad; vertical-align: text-bottom; animation: vsblink 1s steps(1) infinite; }
+@keyframes vsblink { 50% { opacity: 0; } }
+/* No ligatures: students must see >= and != exactly as they type them */
+.vscode, .vscode *, .slide pre, .slide code, .dbt { font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0; }
+/* syntax colors (Dark Modern / Dark+) */
+.t-kw { color: #569cd6; } .t-ctl { color: #c586c0; } .t-str { color: #ce9178; } .t-num { color: #b5cea8; }
+.t-com { color: #6a9955; } .t-fn { color: #dcdcaa; } .t-var { color: #9cdcfe; } .t-cls { color: #4ec9b0; }
+.t-b0 { color: #ffd700; } .t-b1 { color: #da70d6; } .t-b2 { color: #179fff; }
+
+.vs-panel { flex: none; height: var(--vs-term, 236px); display: flex; flex-direction: column; border-top: 1px solid var(--vs-border); background: var(--vs-side); }
+.vs-ptabs { height: 30px; flex: none; display: flex; gap: 22px; align-items: center; padding: 0 16px; font: 12px var(--body); letter-spacing: .05em; color: var(--vs-dim); }
+.vs-ptabs .on { color: #e7e7e7; border-bottom: 1px solid #e7e7e7; padding: 5px 0; }
+.vs-ptabs .note { margin-left: auto; letter-spacing: 0; text-transform: none; font-size: 13px; }
+.vs-terms { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; min-height: 0; }
+.vs-term { margin: 0; padding: 4px 16px 10px; overflow: auto; font: var(--vs-tfont, 16px)/var(--vs-tlh, 22px) var(--mono); color: var(--vs-text); white-space: pre-wrap; word-break: break-word; border-left: 1px solid var(--vs-border); background: var(--vs-side); border-radius: 0; scrollbar-width: thin; scrollbar-color: #424242 transparent; }
+.vs-term:first-child { border-left: 0; }
+.vs-term .tout > div { min-height: var(--vs-tlh, 22px); }
+.vs-term .cmd { color: #e7e7e7; }
+.vs-term .cmd::before { content: '$ '; color: #89d185; }
+.vs-term .err { color: #f48771; }
+.vs-term .sys { color: #8b949e; font-style: italic; }
+.vs-status { height: 26px; flex: none; display: flex; align-items: center; gap: 18px; padding: 0 12px; background: var(--vs-blue); color: #fff; font: 13px var(--body); }
+.vs-status .r { margin-left: auto; display: flex; gap: 18px; align-items: center; }
+.vs-status button { background: rgb(255 255 255 / .16); border: 0; color: #fff; font: 600 13px var(--body); padding: 2px 10px; border-radius: 3px; cursor: pointer; }
+.vs-status button:hover { background: rgb(255 255 255 / .28); }
+.vs-status .pystat.loading { opacity: .75; }
+.vs-status .pystat.off { color: #ffe76a; }
+
+
+/* Monaco hosts the editor; the simple editor (offline fallback) scrolls itself */
+.vscode .vs-code { position: relative; }
+.vscode.monaco .vs-code { display: block; overflow: hidden; }
+.vscode .monaco-editor .ln-flash-m { background: rgb(255 231 106 / .16); }
+.vs-tab .x.dirty { color: #e7e7e7; font-size: 18px; line-height: 1; }
+/* The terminal: output lines + a prompt you type into */
+.vs-term { cursor: text; outline: none; }
+.vs-term .tprompt { display: flex; align-items: baseline; min-height: var(--vs-tlh, 22px); }
+.vs-term .ps { color: #89d185; white-space: pre; }
+.vs-term .tin { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; padding: 0; margin: 0;
+  font: inherit; color: #e7e7e7; caret-color: #e7e7e7; }
+
+/* A slide that holds a codepad: small title, the window fills the rest */
+.slide.pad { padding: 58px 40px 56px; }
+.slide.pad h2 { font-size: 44px; margin: 0 0 14px 8px; display: flex; align-items: baseline; gap: 20px; }
+.slide.pad h2 .say { font: 400 24px var(--body); color: var(--muted); letter-spacing: 0; }
+
+/* Full-page playground */
+body.playground { overflow: hidden; height: 100vh; margin: 0; display: flex; flex-direction: column; background: #10151f; padding: 14px; gap: 10px; }
+body.playground .bar { color: #c9d1dd; font: 15px var(--body); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+body.playground .bar a { color: #9fc3ff; }
+body.playground .vscode { --vs-term: 34vh; }
+@media (max-width: 800px) {
+  body.playground { overflow: auto; height: auto; min-height: 100vh; }
+  body.playground .vscode { --vs-font: 15px; --vs-lh: 22px; min-height: 900px; }
+  body.playground .vs-exp, body.playground .vs-act { display: none; }
+  body.playground .vs-groups, body.playground .vs-terms { grid-auto-flow: row; }
+  body.playground .vs-group { border-left: 0; border-top: 1px solid var(--vs-border); min-height: 300px; }
+  body.playground .vs-panel { height: auto; }
+  body.playground .vs-term { min-height: 160px; border-left: 0; border-top: 1px solid var(--vs-border); }
+}
+
+/* Presenter window controls */
+.pv .padbox { background: #1a2130; border-radius: 10px; padding: 14px 18px; font-size: 16px; display: none; }
+.pv .padbox.on { display: block; }
+.pv .padbox pre { font: 15px/1.4 var(--mono); background: #0b0f17; color: #e9edf5; padding: 10px 12px; border-radius: 6px; margin: 8px 0; max-height: 260px; overflow: auto; white-space: pre; }
+.pv .padbox .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.pv .padbox button { flex: 1; }
+
+/* Presenter notes: the "TYPE THIS" code for each code slide */
+.pv .notesbox .typecode { border-left: 4px solid #ffe76a; padding-left: 14px; margin: 10px 0 18px; }
+.pv .notesbox .typecode p.th { font: 700 15px var(--mono); color: #ffe76a; margin: 0 0 4px; letter-spacing: .04em; }
+.pv .notesbox .typecode p.tf { font-size: 17px; margin: 10px 0 3px; color: #c9d1dd; }
+.pv .notesbox .typecode pre { font: 19px/1.45 var(--mono); background: #0b0f17; color: #e9edf5; padding: 10px 14px; border-radius: 6px;
+  margin: 0; white-space: pre; overflow-x: auto; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0; user-select: all; }

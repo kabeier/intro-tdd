@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test Driven Development</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f4f6f9; --grid:#dce3ee; --ink:#1b2230; --muted:#5b6577; --blue:#2552c9; --green:#13795b; --sticky:#ffe76a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: var(--ink); font-size: 18px; line-height: 1.5;
+    background: var(--paper) linear-gradient(var(--grid) 1px, transparent 1px) -1px -1px / 40px 40px,
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px) -1px -1px / 40px 40px; }
+  main { max-width: 1120px; margin: 0 auto; padding: 64px 28px 80px; }
+  h1 { font: 800 clamp(44px, 7vw, 80px)/0.95 'Bricolage Grotesque', sans-serif; letter-spacing: -0.03em; margin: 0 0 16px; }
+  .lede { max-width: 60ch; color: var(--muted); font-size: 20px; margin: 0 0 48px; }
+  .lectures { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; }
+  section { background: #fff; border: 2px solid var(--ink); border-radius: 4px; padding: 28px; }
+  .num { font: 800 64px/1 'Bricolage Grotesque', sans-serif; color: var(--blue); }
+  h2 { font: 800 30px/1.1 'Bricolage Grotesque', sans-serif; margin: 8px 0 6px; letter-spacing: -0.01em; }
+  section > p { margin: 0 0 22px; color: var(--muted); }
+  a.slides { display: block; background: var(--sticky); color: var(--ink); text-decoration: none; padding: 20px 22px; margin-bottom: 18px;
+    transform: rotate(-0.8deg); box-shadow: 0 10px 18px -10px rgb(27 34 48 / 0.45); transition: transform .15s; }
+  a.slides:hover, a.slides:focus-visible { transform: rotate(0deg) translateY(-2px); }
+  a.slides b { display: block; font: 800 26px 'Bricolage Grotesque', sans-serif; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  ol a { display: block; padding: 14px 16px; border: 2px solid var(--grid); border-radius: 4px; color: var(--ink); text-decoration: none; }
+  ol a:hover, ol a:focus-visible { border-color: var(--blue); }
+  ol a b { color: var(--blue); }
+  ol a span { display: block; color: var(--muted); font-size: 16px; }
+  h3 { font: 800 26px 'Bricolage Grotesque', sans-serif; margin: 56px 0 14px; }
+  .kit { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .kit a { background: #fff; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .gallery figure { margin: 0; background: #fff; border: 2px solid var(--grid); border-radius: 4px; padding: 8px; }
+  .gallery img { width: 100%; aspect-ratio: 16/10; object-fit: cover; object-position: top; display: block; }
+  .gallery figcaption { font-size: 15px; padding: 6px 2px 0; display: flex; justify-content: space-between; gap: 8px; }
+  .gallery figcaption a { color: var(--blue); }
+  .install { margin-bottom: 20px; }
+  .install h4 { font: 800 21px 'Bricolage Grotesque', sans-serif; margin: 28px 0 6px; }
+  .install h4:first-child { margin-top: 0; }
+  .install .steps { display: block; list-style: decimal; padding-left: 1.4em; margin: 0 0 14px; }
+  .install .steps li::marker { font-weight: 700; color: var(--blue); } .install .steps li { margin-bottom: 12px; }
+  .os { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+  .os h5 { font: 700 17px 'Bricolage Grotesque', sans-serif; margin: 6px 0 4px; }
+  @media (max-width: 760px) { .os { grid-template-columns: 1fr; } }
+  .install code { font-size: 0.9em; background: #e8ecf3; padding: 1px 5px; border-radius: 3px; }
+  .cmdwrap { position: relative; margin: 8px 0 6px; }
+  pre.cmd { background: var(--ink); color: #fff; padding: 16px 18px; padding-right: 90px; border-radius: 4px; overflow-x: auto; margin: 0; font-size: 15px; }
+  pre.cmd code { background: none; padding: 0; }
+  .copy { position: absolute; top: 10px; right: 10px; font: 700 14px 'Atkinson Hyperlegible'; padding: 6px 12px; border-radius: 4px; border: 0; background: var(--sticky); color: var(--ink); cursor: pointer; }
+  .fail { margin: 0 0 8px; padding: 14px 18px; background: var(--sticky); transform: rotate(-0.4deg); }
+  .install .steps a, details a { display: inline; padding: 0; border: 0; color: var(--blue); text-decoration: underline; }
+  details { margin: 6px 0 14px; }
+  summary { cursor: pointer; font-weight: 700; color: var(--blue); }
+  footer { margin-top: 56px; color: var(--muted); font-size: 16px; }
+  a:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { a.slides { transition: none; } }
+  .install table { border-collapse: collapse; background: #fff; margin: 10px 0; font-size: 15px; display: block; overflow-x: auto; max-width: 100%; }
+  .install th, .install td { border: 1px solid var(--grid); padding: 6px 10px; text-align: left; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Test Driven Development</h1>
+  <p class="lede">Write the test first, watch it fail, then make it pass. Lecture 1 does it in Python with pytest, Lecture 2 in JavaScript with Jest, and both run the tests in a Docker container the way a CI pipeline does. You type every line along with the slides. Everything opens in a new tab, so keep this page open as your home base.</p>
+
+  <div class="lectures">
+    <section>
+      <div class="num">1</div>
+      <h2>Intro to TDD with pytest</h2>
+      <p>Red, Green, Refactor. How pytest finds tests, reading its output and exit codes, assertions, monkeypatch and capsys, and pytest in a container.</p>
+      <a class="slides" href="lecture-1-intro-to-tdd-w-pytest/slides.html" target="_blank" rel="noopener"><b>Open the slides</b>Arrow keys to move, F for fullscreen</a>
+      <ol>
+        <li><a href="lecture-1-intro-to-tdd-w-pytest/code-lab/" target="_blank" rel="noopener"><b>Code Lab 1</b><span>Every step from the lecture, with what real pytest prints after each one (red runs included).</span></a></li>
+        <li><a href="lecture-1-intro-to-tdd-w-pytest/activity-pass-fail-not-found/" target="_blank" rel="noopener"><b>Activity: Pass, fail, or not found?</b><span>A test file and a test. Does pytest pass it, fail it, or never find it?</span></a></li>
+      </ol>
+    </section>
+    <section>
+      <div class="num">2</div>
+      <h2>TDD with Jest</h2>
+      <p>module.exports and require, setting up Jest with npm, your first spec, reading Jest's output, describe and skipping, Jest in a container, and where tests fit in CI/CD.</p>
+      <a class="slides" href="lecture-2-tdd-w-jest/slides.html" target="_blank" rel="noopener"><b>Open the slides</b>Arrow keys to move, F for fullscreen</a>
+      <ol>
+        <li><a href="lecture-2-tdd-w-jest/code-lab/" target="_blank" rel="noopener"><b>Code Lab 2</b><span>Exports, npm setup, the first test and describe blocks, with what real Jest prints after each step.</span></a></li>
+        <li><a href="lecture-2-tdd-w-jest/activity-pass-fail-skipped/" target="_blank" rel="noopener"><b>Activity: PASS, FAIL or SKIPPED?</b><span>toBe or toEqual? Skipped or not? Read the Jest test, call it.</span></a></li>
+      </ol>
+    </section>
+  </div>
+
+  <h3 id="homework">Homework Part I: pytest</h3>
+  <section class="install">
+    <p><b>In this order</b>, top to bottom (each is a little harder): (1) <a href="https://github.com/Code-Platoon-Assignments/algo-roman-numeral-py" target="_blank" rel="noopener"><b>Roman Numerals</b></a> (Python), (2) <a href="https://github.com/Code-Platoon-Assignments/algo-linear-search-py" target="_blank" rel="noopener"><b>Linear Search</b></a> (Python). Then 50 steps of your current <b>FreeCodeCamp</b> certification.</p>
+
+    <h4>1 · Get each assignment</h4>
+    <ol class="steps">
+      <li>Open the assignment on GitHub and click <b>Fork</b> → <b>Create fork</b>.</li>
+      <li>Clone <b>your</b> fork and open it (Roman Numerals as the example):
+        <div class="cmdwrap"><pre class="cmd"><code>git clone https://github.com/YOUR-USERNAME/algo-roman-numeral-py.git
+cd algo-roman-numeral-py
+code .</code></pre><button type="button" class="copy">Copy</button></div>
+        VS Code may offer to <b>Reopen in Container</b>. You can skip it.</li>
+      <li>pytest installed? <code>pytest --version</code>. If not: <code>pip install pytest</code> (or <code>pip3</code>).</li>
+    </ol>
+
+    <h4>2 · Red first, then green</h4>
+    <ol class="steps">
+      <li><b>Before writing code</b>, run the tests and watch them fail:
+        <table>
+          <tr><th>Assignment</th><th>Your code</th><th>Run</th></tr>
+          <tr><td>Roman Numerals</td><td><code>roman_numerals.py</code></td><td><code>pytest test_roman_numerals.py</code></td></tr>
+          <tr><td>Linear Search</td><td><code>linear_search.py</code></td><td><code>pytest test_linear_search.py</code></td></tr>
+        </table></li>
+      <li>Make one test pass at a time. Then <b>add your own tests</b> for edge cases (both READMEs ask for this): add a <code>def test_…():</code> and watch it fail before you handle it.</li>
+      <li><b>Done</b> = <code>pytest</code> prints only dots and <code>N passed</code>, and <code>echo $?</code> prints 0.
+        <p class="fail"><b>If this breaks:</b> <code>assert None == 'I'</code> = your function doesn't <b>return</b> yet. <code>no tests ran</code> = you're in the wrong folder (<code>cd</code> into the repo).</p></li>
+    </ol>
+
+    <h4>3 · Commit and push</h4>
+    <ol class="steps">
+      <li><div class="cmdwrap"><pre class="cmd"><code>git add -A
+git commit -m "Solve roman numerals with tests"
+git push</code></pre><button type="button" class="copy">Copy</button></div>
+        <b>Or ask Claude</b> (in the assignment folder):
+        <div class="cmdwrap"><pre class="cmd" style="white-space:pre-wrap"><code>Run git status and show me the list of files. Then suggest a commit message for my solution and wait for my approval. After I approve, commit and push to my fork.</code></pre><button type="button" class="copy">Copy</button></div>
+        <p class="fail"><b>If this breaks:</b> 403 / "Permission denied" on push = you cloned Code Platoon's repo, not your fork. <code>git remote set-url origin https://github.com/YOUR-USERNAME/algo-roman-numeral-py.git</code></p></li>
+    </ol>
+  </section>
+
+  <h3>Homework Part II: Jest, then a calculator</h3>
+  <section class="install">
+    <p><b>In this order</b>, top to bottom: (1) <a href="https://github.com/Code-Platoon-Assignments/algo-fibonacci" target="_blank" rel="noopener"><b>Fibonacci</b></a> (Jest), (2) <a href="https://github.com/Code-Platoon-Assignments/algo-linear-search" target="_blank" rel="noopener"><b>Linear Search</b></a> (Jest), (3) <a href="https://github.com/Code-Platoon-Assignments/intro-to-pytest" target="_blank" rel="noopener"><b>Test my Calculator</b></a> (pytest). Then 50 steps of your current <b>FreeCodeCamp</b> certification.</p>
+
+    <h4>4 · The two Jest assignments</h4>
+    <ol class="steps">
+      <li>Fork, clone your fork, <code>cd</code> into it. These repos already list Jest in package.json, so one command installs it:
+        <div class="cmdwrap"><pre class="cmd"><code>npm install
+npm test</code></pre><button type="button" class="copy">Copy</button></div>
+        You'll see <b>FAIL</b> and a ● block per test: that's your red.</li>
+      <li>Write <code>fibonacci.js</code> / <code>linearSearch.js</code> until <code>npm test</code> shows <b>PASS</b>. For Linear Search, add your own tests to the spec file.
+        <p class="fail"><b>If this breaks:</b> <code>jest: command not found</code> = run <code>npm install</code> first. <code>Received: 0</code> or <code>Received: undefined</code> = the starter code is still answering: your function doesn't <b>return</b> your result yet. <code>serializes to the same string</code> = use <code>toEqual</code> for arrays.</p></li>
+      <li>Commit and push, like step 3.</li>
+    </ol>
+
+    <h4>5 · Test my Calculator</h4>
+    <ol class="steps">
+      <li>Fork and clone it, then follow its README: create <code>calculator.py</code> (the code is in the README) and <code>test_calculator.py</code>.</li>
+      <li>Write tests for add, subtract, multiply and divide, the printed output with <code>capsys</code>, and the arguments with <code>monkeypatch</code>. Add a test that divide by zero raises: <code>with pytest.raises(ValueError):</code></li>
+      <li>Run <code>pytest test_calculator.py</code> until it's all green, then commit and push.</li>
+    </ol>
+  </section>
+
+  <ol class="kit">
+    <li><a href="https://github.com/kabeier/intro-tdd/blob/main/demo-kit/RUNBOOK.md" target="_blank" rel="noopener"><b>Runbook</b><span>Before class, the codepad keys, per-slide Do/Say, time checks.</span></a></li>
+    <li><a href="https://github.com/kabeier/intro-tdd/blob/main/demo-kit/prompts.md" target="_blank" rel="noopener"><b>Code and commands</b><span>Every file from both lectures, the Docker demos, and the "Or ask Claude" prompt.</span></a></li>
+    <li><a href="https://github.com/kabeier/intro-tdd/tree/main/demo-kit" target="_blank" rel="noopener"><b>Finished lecture folders</b><span>tdd-pytest/ and tdd-jest/ with their Dockerfiles, exactly as they end up in class.</span></a></li>
+    <li><a href="https://codeplatoon.github.io/se-curriculum/phase-I/01-Fundamentals/4-tdd/" target="_blank" rel="noopener"><b>The curriculum</b><span>TDD overview, both lessons and the assignments page.</span></a></li>
+  </ol>
+
+  <h3>Diagrams</h3>
+  <div class="gallery" id="gallery"></div>
+
+  <footer>Want to edit a diagram? Download its .tldr file and drag it onto <a href="https://www.tldraw.com" target="_blank" rel="noopener">tldraw.com</a>. Earlier lectures: <a href="https://kabeier.github.io/intro-js-py/" target="_blank" rel="noopener">JavaScript and Python</a> · <a href="https://kabeier.github.io/intro-docker/" target="_blank" rel="noopener">Docker</a> · <a href="https://kabeier.github.io/SPAs-and-Claude/" target="_blank" rel="noopener">SPAs and Claude</a> · <a href="https://kabeier.github.io/Databases-and-Supabase/" target="_blank" rel="noopener">Databases and Supabase</a> · <a href="https://kabeier.github.io/Claude-and-full-stack-apps/" target="_blank" rel="noopener">Full-Stack Apps</a> · <a href="https://kabeier.github.io/Claude-and-auth/" target="_blank" rel="noopener">Authentication</a>.</footer>
+</main>
+<script>
+  document.querySelectorAll('.copy').forEach((b) => b.onclick = async () => {
+    await navigator.clipboard.writeText(b.previousElementSibling.innerText.trim()); b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1500)
+  })
+  const DIAGRAMS = [
+    ['TD1-01-red-green-refactor', 'Red, Green, Refactor'], ['TD1-02-pytest-finds', 'How pytest finds tests'],
+    ['TD1-03-reading-pytest', 'Reading pytest output'], ['TD2-01-exports-require', 'module.exports and require'],
+    ['TD2-02-reading-jest', 'Reading Jest output'], ['TD2-03-ci-pipeline', 'Tests in a CI pipeline'],
+  ]
+  document.getElementById('gallery').innerHTML = DIAGRAMS.map(([f, t]) => `
+    <figure><a href="diagrams/${f}.png" target="_blank" rel="noopener"><img src="diagrams/${f}.png" alt="${t}" loading="lazy"></a>
+    <figcaption>${t}<a href="diagrams/${f}.tldr" download>.tldr</a></figcaption></figure>`).join('')
+</script>
+</body>
+</html>

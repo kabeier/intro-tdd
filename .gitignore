@@ -1,0 +1,8 @@
+node_modules
+dist
+.playwright-mcp
+.DS_Store
+.env
+.env.local
+.mcp.json
+__pycache__

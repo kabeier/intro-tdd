@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 2 · TDD with Jest</title>
+<link rel="stylesheet" href="../shared/deck.css">
+<link rel="stylesheet" href="../shared/codepad.css">
+<style>
+  .cmdbox pre { font-size: 23px; padding: 18px 24px; }
+</style>
+</head>
+<body data-minutes="40">
+<div class="stage">
+
+<!-- ============ OPEN + MODULES (0–9) ============ -->
+<section class="slide title" data-seg="Open" data-at="0">
+  <div class="kicker">Fundamentals · Test Driven Development · Part 2 of 2</div>
+  <h1>The same TDD, in JavaScript</h1>
+  <p class="sub">Share code between files, then test it with Jest: describe, test, expect. Typed and run live.</p>
+  <aside class="notes">
+    <p><b>Before class:</b> this deck open in <b>Chrome</b> with internet. In your own terminal Node works (<code>node --version</code>).</p>
+    <p>Press <b>T</b>. Students: <code>mkdir tdd-jest</code>, <code>cd tdd-jest</code>, <code>code .</code></p>
+    <p><b>Code slides:</b> type live from <b>TYPE THIS</b> in these notes, <b>Ctrl+S</b>, then type the command in the terminal. <b>Backup:</b> <b>N</b> types the next chunk, <b>R</b> runs.</p>
+  </aside>
+</section>
+
+<section class="slide statement" data-seg="Open" data-at="1">
+  <h2>A test lives in its own file</h2>
+  <ul style="margin-top:30px">
+    <li><code>factorial.js</code> holds the code. <code>factorial.spec.js</code> holds the tests</li>
+    <li>In Python, <code>from example import …</code> just worked</li>
+    <li>In JavaScript, a file shares <b>nothing</b> until you export it</li>
+  </ul>
+  <p>So first: how one JS file uses another.</p>
+  <aside class="notes">
+    <p>"Same Red-Green-Refactor as Lecture 1. The new part is JavaScript's import/export."</p>
+    <p>We use Node's way: <code>module.exports</code> / <code>require</code>. The other way (<code>import</code>/<code>export</code>) comes with React, in a future lecture.</p>
+  </aside>
+</section>
+
+<section class="slide pad" data-seg="Code along: exports" data-at="3">
+  <h2>Export it, then require it <span class="say">factorial.js · runner.js</span></h2>
+  <div class="vscode" data-folder="tdd-jest" data-terminal="one" data-term-lines="9" data-run="node runner.js">
+<script type="text/plain" data-file="factorial.js" data-step>function factorial(num) {
+  let product = 1;
+
+  for (let i = num; i > 0; i--) {
+    product = product * i;
+  }
+
+  return product;
+}</script>
+<script type="text/plain" data-file="runner.js" data-step>console.log(factorial(4));</script>
+<script type="text/plain" data-file="factorial.js" data-step>module.exports = factorial;</script>
+<script type="text/plain" data-file="runner.js" data-step data-mode="replace" data-find="console.log(factorial(4));">const factorial = require("./factorial.js");
+
+console.log(factorial(4));</script>
+  </div>
+  <aside class="notes">
+    <p><b>** CODE ALONG, about 5 minutes. **</b> Students: <code>factorial.js</code>, <code>runner.js</code>.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf"><b>factorial.js</b> · part 1</p>
+    <pre>function factorial(num) {
+  let product = 1;
+
+  for (let i = num; i &gt; 0; i--) {
+    product = product * i;
+  }
+
+  return product;
+}</pre>
+    <p class="tf"><b>runner.js</b> · part 1</p>
+    <pre>console.log(factorial(4));</pre>
+    <p class="tf"><b>factorial.js</b> · part 2 (add below, after a blank line)</p>
+    <pre>module.exports = factorial;</pre>
+    <p class="tf">In <b>runner.js</b> change <code>console.log(factorial(4));</code> to <code>const factorial = require(&quot;./factorial.js&quot;);
+
+console.log(factorial(4));</code>, then save and run.</p>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>node runner.js</pre>
+    </div>
+    <ul>
+      <li>After steps 1–2, save and run <code>node runner.js</code>: <code>ReferenceError: factorial is not defined</code>. "runner.js has never heard of factorial."</li>
+      <li>Step 3: <code>module.exports = factorial;</code> sends it out. Run again: <b>still</b> the same error. Exporting isn't enough.</li>
+      <li>Step 4: <code>require("./factorial.js")</code> brings it in → <code>24</code>.</li>
+      <li>The path is relative to <b>this</b> file: <code>./</code> = same folder.</li>
+      <li>(The lesson's runner just calls <code>factorial(4);</code>. We wrap it in <code>console.log</code> so you can see the 24.)</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide diagram" data-seg="Exports" data-at="8">
+  <img src="../diagrams/TD2-01-exports-require.png" alt="module.exports sends it out; require brings it in. factorial.js ends with module.exports = factorial; runner.js does const factorial = require(&quot;./factorial.js&quot;) and console.log(factorial(4)) prints 24. To export several things, myFaveNums.js does module.exports = { x, y, z } and runner.js does const { x, y, z } = require(&quot;./myFaveNums.js&quot;), then console.log(x, y, z) prints 1 2 3. ./ means the same folder as this file. Forget the export and you get factorial is not a function.">
+  <div class="src">diagrams/TD2-01-exports-require.tldr</div>
+  <aside class="notes">
+    <p>"One thing: export it directly. Several: export an <b>object</b>, and destructure it when you require."</p>
+    <p>Forget <code>module.exports</code> and <code>require</code> returns an empty object → <code>TypeError: factorial is not a function</code>.</p>
+  </aside>
+</section>
+
+<!-- ============ SET UP JEST (9–13) ============ -->
+<section class="slide pad" data-seg="Code along: set up Jest" data-at="9">
+  <h2>Set up Jest: package.json <span class="say">npm init -y · "test": "jest" · npm install</span></h2>
+  <div class="vscode" data-folder="tdd-jest" data-terminal="one" data-term-lines="12" data-setup="npm init -y" data-run="npm install --save-dev jest|npm test">
+<script type="text/plain" data-file="package.json" data-step data-mode="replace" data-find='"test": "echo \"Error: no test specified\" &amp;&amp; exit 1"'>"test": "jest"</script>
+  </div>
+  <aside class="notes">
+    <p><b>** CODE ALONG, about 4 minutes. **</b> In this order:</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf">First, in the terminal:</p><pre>npm init -y</pre>
+    <p class="tf">In <b>package.json</b> change <code>&quot;test&quot;: &quot;echo \&quot;Error: no test specified\&quot; &amp;&amp; exit 1&quot;</code> to <code>&quot;test&quot;: &quot;jest&quot;</code>, then save and run.</p>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>npm install --save-dev jest
+npm test</pre>
+    </div>
+    <ol>
+      <li>Terminal: <code>npm init -y</code>. package.json appears with default settings.</li>
+      <li>Editor: change the test script to <code>"test": "jest"</code>, <b>Ctrl+S</b>.</li>
+      <li>Terminal: <code>npm install --save-dev jest</code>. In real terminals this downloads Jest (~30 MB) into <code>node_modules/</code>; package.json gets a <code>devDependencies</code> entry.</li>
+      <li>Terminal: <code>npm test</code> → <b>No tests found, exiting with code 1</b>. Correct: we haven't written one yet.</li>
+    </ol>
+    <p><b>Watch for:</b> <code>npm test</code> before installing → <code>jest: command not found</code>. Before changing the script → <code>Error: no test specified</code>.</p>
+  </aside>
+</section>
+
+<section class="slide" data-seg="Naming" data-at="13">
+  <h2>How Jest finds your tests</h2>
+  <table class="dbt">
+    <tr><th></th><th>pytest</th><th>Jest</th></tr>
+    <tr><td><b>test file</b></td><td>test_example.py</td><td class="pk">factorial.spec.js · factorial.test.js</td></tr>
+    <tr><td><b>or a folder</b></td><td>(any folder)</td><td>__tests__/</td></tr>
+    <tr><td><b>one test</b></td><td>def test_add():</td><td class="pk">test("adds", () => { … })</td></tr>
+    <tr><td><b>check</b></td><td>assert x == 4</td><td class="pk">expect(x).toBe(4)</td></tr>
+    <tr><td><b>run</b></td><td>pytest</td><td>npm test</td></tr>
+  </table>
+  <p class="bottomline">test() takes a description and a function to run later (a callback).</p>
+  <aside class="notes">
+    <ul>
+      <li><code>test</code> and <code>expect</code> are given to you by Jest. No require needed.</li>
+      <li><b>Callback:</b> a function you hand to another function, which calls it later.</li>
+      <li><code>expect(…)</code> wraps the value; <code>.toBe(…)</code> is the <b>matcher</b>: "is it exactly this?"</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ============ FIRST TEST (14–19) ============ -->
+<section class="slide pad" data-seg="Code along: first Jest test" data-at="14">
+  <h2>Your first Jest test <span class="say">factorial.spec.js · factorial.js</span></h2>
+  <div class="vscode" data-folder="tdd-jest" data-terminal="one" data-term-lines="19" data-run="npm test">
+<script type="text/plain" data-file="factorial.spec.js" data-step>const factorial = require("./factorial.js");
+
+test("tests factorial(4) = 24", () => {
+  expect(factorial(4)).toBe(24);
+});</script>
+<script type="text/plain" data-file="factorial.spec.js" data-step data-mode="replace" data-find="toBe(24)">toBe(23)</script>
+<script type="text/plain" data-file="factorial.spec.js" data-step data-mode="replace" data-find="toBe(23)">toBe(24)</script>
+<script type="text/plain" data-file="factorial.js" data-start>function factorial(num) {
+  let product = 1;
+
+  for (let i = num; i > 0; i--) {
+    product = product * i;
+  }
+
+  return product;
+}
+
+module.exports = factorial;</script>
+<script type="text/plain" data-file="package.json" data-hidden data-start>{
+  "name": "tdd-jest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "jest": "^30.5.2"
+  }
+}</script>
+  </div>
+  <aside class="notes">
+    <p><b>** CODE ALONG, about 5 minutes. **</b> Students: <code>factorial.spec.js</code>.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf"><b>factorial.spec.js</b> · part 1</p>
+    <pre>const factorial = require(&quot;./factorial.js&quot;);
+
+test(&quot;tests factorial(4) = 24&quot;, () =&gt; {
+  expect(factorial(4)).toBe(24);
+});</pre>
+    <p class="tf">In <b>factorial.spec.js</b> change <code>toBe(24)</code> to <code>toBe(23)</code>, then save and run.</p>
+    <p class="tf">In <b>factorial.spec.js</b> change <code>toBe(23)</code> to <code>toBe(24)</code>, then save and run.</p>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>npm test</pre>
+    </div>
+    <ul>
+      <li>Type the test, save, <code>npm test</code> → <b>PASS</b>, ✓, <code>Tests: 1 passed</code>.</li>
+      <li>"Better than last week's true/false, right?"</li>
+      <li>Change <code>24</code> to <code>23</code> (step 2), save, run → <b>FAIL</b>. Read it out: <b>Expected: 23, Received: 24</b>, the line with <code>&gt;</code>, the <code>^</code> under the matcher.</li>
+      <li><code>echo $?</code> → <b>1</b>. Change it back (step 3), run → PASS, <code>echo $?</code> → <b>0</b>.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide diagram" data-seg="Reading the output" data-at="19">
+  <img src="../diagrams/TD2-02-reading-jest.png" alt="Reading Jest: the badge, the list, then the story. Example output: FAIL ./factorial.spec.js; a cross next to tests factorial(4) = 24; then a bullet block for that test: expect(received).toBe(expected), Expected: 23, Received: 24, and the failing line 4 with a caret under the matcher; then Tests: 1 failed, 1 total. Key: PASS or FAIL per file; a check mark passed, a cross failed, a circle skipped. Expected is what you wrote in toBe; Received is what your code returned. The greater-than line is the failing line and the caret marks the matcher. Exit code 0 pass, 1 fail. Read Expected and Received first, then decide whether the test is wrong or the code is.">
+  <div class="src">diagrams/TD2-02-reading-jest.tldr</div>
+  <aside class="notes">
+    <p>"Expected is what <b>you</b> wrote. Received is what your <b>code</b> did. One of them is wrong: decide which."</p>
+  </aside>
+</section>
+
+<!-- ============ ACTIVITY (20–26) ============ -->
+<section class="slide activity" data-seg="Activity: PASS, FAIL or SKIPPED?" data-at="20">
+  <h2>Activity: PASS, FAIL or SKIPPED?</h2>
+  <div class="countdown" data-sec="360"></div>
+  <ol class="steps">
+    <li>A Jest test appears (<code>factorial</code> is the one we wrote)</li>
+    <li>In chat on "go": <b>PASS</b>, <b>FAIL</b> or <b>SKIPPED</b></li>
+    <li>Watch <code>toBe</code> vs <code>toEqual</code></li>
+  </ol>
+  <p class="muted small" style="margin-top:24px">Page: activity-pass-fail-skipped/</p>
+  <aside class="notes">
+    <p>About 30 seconds a card; the first 6 are the core set. Every answer was run in real Jest 30.</p>
+    <p>Key idea: <code>toBe</code> = the <b>same</b> thing (Object.is). Two arrays with the same contents are different arrays → use <code>toEqual</code>.</p>
+  </aside>
+</section>
+
+<!-- ============ DESCRIBE + SKIP (26–32) ============ -->
+<section class="slide pad" data-seg="Code along: describe, skip" data-at="26">
+  <h2>Group with describe, skip with x <span class="say">factorial.spec.js</span></h2>
+  <div class="vscode" data-folder="tdd-jest" data-terminal="one" data-term-lines="11" data-run="npm test">
+<script type="text/plain" data-file="factorial.spec.js" data-start>const factorial = require("./factorial.js");
+
+test("tests factorial(4) = 24", () => {
+  expect(factorial(4)).toBe(24);
+});</script>
+<script type="text/plain" data-file="factorial.spec.js" data-step data-mode="set">const factorial = require("./factorial.js");
+
+describe("tests factorial for small numbers", () => {
+  test("tests factorial(0) = 1", () => {
+    expect(factorial(0)).toBe(1);
+  });
+
+  test("tests factorial(3) = 6", () => {
+    expect(factorial(3)).toBe(6);
+  });
+});
+
+describe("tests factorial for large numbers", () => {
+  test("tests factorial(10) = 3628800", () => {
+    expect(factorial(10)).toBe(3628800);
+  });
+
+  test("tests factorial(20) = 2432902008176640000", () => {
+    expect(factorial(20)).toBe(2432902008176640000);
+  });
+});</script>
+<script type="text/plain" data-file="factorial.spec.js" data-step data-mode="replace" data-find='  test("tests factorial(3) = 6"'>  xtest("tests factorial(3) = 6"</script>
+<script type="text/plain" data-file="factorial.spec.js" data-step data-mode="replace" data-find='describe("tests factorial for large numbers"'>xdescribe("tests factorial for large numbers"</script>
+  </div>
+  <aside class="notes">
+    <p><b>** CODE ALONG, about 5 minutes. **</b> Step 1 is long: <b>copy it from your notes</b> (click the block) or press <b>N</b>. Students can copy it from Code Lab 2.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf">Replace all of <b>factorial.spec.js</b> with (copy it: click the block):</p>
+    <pre>const factorial = require(&quot;./factorial.js&quot;);
+
+describe(&quot;tests factorial for small numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(0) = 1&quot;, () =&gt; {
+    expect(factorial(0)).toBe(1);
+  });
+
+  test(&quot;tests factorial(3) = 6&quot;, () =&gt; {
+    expect(factorial(3)).toBe(6);
+  });
+});
+
+describe(&quot;tests factorial for large numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(10) = 3628800&quot;, () =&gt; {
+    expect(factorial(10)).toBe(3628800);
+  });
+
+  test(&quot;tests factorial(20) = 2432902008176640000&quot;, () =&gt; {
+    expect(factorial(20)).toBe(2432902008176640000);
+  });
+});</pre>
+    <p class="tf">In <b>factorial.spec.js</b> change <code>test(&quot;tests factorial(3) = 6&quot;</code> to <code>xtest(&quot;tests factorial(3) = 6&quot;</code>, then save and run.</p>
+    <p class="tf">In <b>factorial.spec.js</b> change <code>describe(&quot;tests factorial for large numbers&quot;</code> to <code>xdescribe(&quot;tests factorial for large numbers&quot;</code>, then save and run.</p>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>npm test</pre>
+    </div>
+    <ul>
+      <li>Run → <b>PASS</b>, and the list is grouped under each <code>describe</code>. <code>Tests: 4 passed</code>.</li>
+      <li>Step 2: <code>test</code> → <code>xtest</code> skips one test. Run → <code>○ skipped</code>, <code>1 skipped, 3 passed</code>.</li>
+      <li>Step 3: <code>describe</code> → <code>xdescribe</code> skips a whole group. Run → <code>3 skipped, 1 passed</code>.</li>
+      <li>"Skip what's noisy while you work on one thing. Don't commit skipped tests by accident."</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ============ DOCKER + CI (32–37) ============ -->
+<section class="slide" data-seg="Tests in a container" data-at="32">
+  <h2>Jest in a container</h2>
+  <div class="cols" style="grid-template-columns: 1fr 1.1fr; gap:36px">
+    <div><p class="small" style="margin-bottom:8px"><b>Dockerfile</b> (in <code>tdd-jest/</code>)</p>
+      <pre style="font-size:21px">FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+RUN npm install --save-dev jest
+
+COPY . .
+
+CMD ["npm", "test"]</pre></div>
+    <div>
+      <ul class="small">
+        <li>package.json first, then <code>npm install</code>: dependencies are baked into the image</li>
+        <li><code>COPY . .</code> brings in your code and tests</li>
+        <li>The container runs the suite once and stops</li>
+      </ul>
+      <pre style="font-size:20px; margin-top:14px; padding:16px 22px">docker build -t jest-tests .
+docker run --rm jest-tests
+echo $?</pre>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>** YOUR DEMO, about 3 minutes. **</b> The Dockerfile is the curriculum's, word for word.</p>
+    <ul>
+      <li>Add a <code>.dockerignore</code> with <code>node_modules</code> first, so <code>COPY . .</code> doesn't copy your laptop's node_modules over the container's.</li>
+      <li>Run: same PASS output as on your laptop. <code>echo $?</code> → 0. Break a test, rebuild, run → 1.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide diagram" data-seg="CI/CD" data-at="35">
+  <img src="../diagrams/TD2-03-ci-pipeline.png" alt="In a team, a robot runs your tests on every push. git push, then docker build with the same Node or Python for everyone, then docker run --rm with npm test or pytest. Exit 0 means merge allowed; exit 1 means merge blocked. Why the container: works on my machine doesn't count; the same image runs the same tests on your laptop, your teammate's, and the CI server. Your tests are the gate: red tests mean nobody ships broken code by accident.">
+  <div class="src">diagrams/TD2-03-ci-pipeline.tldr</div>
+  <aside class="notes">
+    <p>"This is why we cared about exit codes. The CI server doesn't read the output: it reads 0 or 1."</p>
+    <p>Examples students will meet: GitHub Actions running on every pull request.</p>
+  </aside>
+</section>
+
+<section class="slide" data-seg="Wrap up" data-at="37">
+  <h2>Homework, Part II</h2>
+  <p class="small" style="margin-bottom:10px">Top to bottom: each one is a little harder.</p>
+  <ol class="small" style="padding-left:1.2em">
+    <li><b>Fibonacci</b> (Jest): <code>npm install</code>, then <code>npm test</code></li>
+    <li><b>Linear Search</b> (Jest): <code>npm install</code>, then <code>npm test</code>, then add tests</li>
+    <li><b>Test my Calculator</b> (pytest): write <code>test_calculator.py</code> with <code>capsys</code> and <code>monkeypatch</code></li>
+  </ol>
+  <p class="bottomline">Red first: run the tests before you write any code.</p>
+  <aside class="notes">
+    <p>Full steps on the class site (Homework Part II). The Jest repos already have package.json: <code>npm install</code> installs Jest from it.</p>
+  </aside>
+</section>
+
+</div>
+<script src="../shared/deck.js"></script>
+<script src="../shared/codepad.js"></script>
+</body>
+</html>

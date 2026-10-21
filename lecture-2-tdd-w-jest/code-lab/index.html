@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Lab 2 · TDD with Jest</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f4f6f9; --grid:#dce3ee; --ink:#1b2230; --muted:#5b6577; --blue:#2552c9; --green:#13795b; --sticky:#ffe76a; --red:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: var(--ink); font-size: 18px; line-height: 1.55;
+    background: var(--paper) linear-gradient(var(--grid) 1px, transparent 1px) -1px -1px / 40px 40px,
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px) -1px -1px / 40px 40px; }
+  main { max-width: 900px; margin: 0 auto; padding: 48px 28px 80px; }
+  .back { color: var(--blue); font-weight: 700; }
+  h1 { font: 800 clamp(40px, 6vw, 64px)/0.98 'Bricolage Grotesque', sans-serif; letter-spacing: -0.03em; margin: 18px 0 14px; }
+  .lede { color: var(--muted); font-size: 20px; margin: 0 0 28px; max-width: 62ch; }
+  h2 { font: 800 28px/1.15 'Bricolage Grotesque', sans-serif; margin: 0 0 10px; }
+  h3 { font: 800 21px 'Bricolage Grotesque', sans-serif; margin: 26px 0 6px; }
+  section { background: #fff; border: 2px solid var(--ink); border-radius: 4px; padding: 28px; margin-bottom: 28px; }
+  section > p { margin: 0 0 14px; }
+  .choose { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .choose a { display: block; background: #fff; border: 2px solid var(--grid); border-radius: 4px; padding: 16px 18px; color: var(--ink); text-decoration: none; }
+  .choose a:hover, .choose a:focus-visible { border-color: var(--blue); }
+  .choose b { display: block; color: var(--blue); font-size: 20px; }
+  .choose span { color: var(--muted); font-size: 16px; }
+  @media (max-width: 700px) { .choose { grid-template-columns: 1fr; } }
+  ol.steps { padding-left: 1.4em; margin: 0 0 8px; }
+  ol.steps > li { margin-bottom: 14px; }
+  ol.steps > li::marker { font-weight: 700; color: var(--blue); }
+  code { font-size: 0.9em; background: #e8ecf3; padding: 1px 5px; border-radius: 3px; }
+  .cmdwrap { position: relative; margin: 8px 0 6px; }
+  pre.cmd { background: var(--ink); color: #fff; padding: 16px 18px; padding-right: 90px; border-radius: 4px; overflow-x: auto; margin: 0; font-size: 15px; }
+  pre.cmd code { background: none; padding: 0; }
+  pre.json { max-height: 420px; }
+  pre.pic { background: #fff; border: 2px solid var(--grid); border-radius: 4px; padding: 14px 18px; overflow-x: auto; font-size: 15px; margin: 8px 0 14px; }
+  .copy { position: absolute; top: 10px; right: 10px; font: 700 14px 'Atkinson Hyperlegible'; padding: 6px 12px; border-radius: 4px; border: 0; background: var(--sticky); color: var(--ink); cursor: pointer; }
+  .note { margin: 10px 0 0; padding: 14px 18px; background: var(--sticky); transform: rotate(-0.4deg); }
+  .req { border: 2px solid var(--grid); border-radius: 4px; padding: 16px 18px; margin: 14px 0; }
+  .req h3 { margin: 0 0 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .method { font: 700 15px 'Atkinson Hyperlegible'; color: #fff; background: var(--blue); padding: 2px 8px; border-radius: 3px; }
+  .method.post { background: var(--green); }
+  .req dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+  .req dt { font-weight: 700; color: var(--muted); }
+  .req dd { margin: 0; overflow-wrap: anywhere; }
+  .expect { color: var(--green); font-weight: 700; }
+  .bad { color: var(--red); font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { font-size: 15px; color: var(--muted); }
+  .dl { display: inline-block; background: var(--sticky); color: var(--ink); font-weight: 700; text-decoration: none; padding: 12px 18px; border-radius: 4px; margin: 4px 0 10px; }
+  details { margin-top: 10px; } summary { cursor: pointer; font-weight: 700; color: var(--blue); }
+  a { color: var(--blue); }
+  a:focus-visible, summary:focus-visible, .copy:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  pre.see { background: #fff; border: 2px solid var(--grid); border-left: 8px solid var(--green); border-radius: 4px; padding: 12px 16px; overflow-x: auto; font-size: 15px; margin: 6px 0 12px; }
+  pre.see .e { color: var(--red); white-space: pre-wrap; }
+  .label { font-weight: 700; color: var(--green); font-size: 15px; margin-top: 6px; }
+  .os { display: grid; grid-template-columns: 1fr; gap: 0 20px; }
+  .os h4 { margin: 6px 0 2px; font-size: 16px; }
+  @media (max-width: 700px) { .os { grid-template-columns: 1fr; } }
+  section h2 .n { color: var(--blue); }
+  td code { overflow-wrap: anywhere; }
+  .os > div, ol.steps > li { min-width: 0; }
+  @media (max-width: 700px) { table { display: block; overflow-x: auto; } section { padding: 18px; } }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../../">← TDD home</a>
+  <h1>Code Lab 2: exports, Jest and describe</h1>
+  <p class="lede">Type along with Lecture 2. Every step shows the code, the command, and what real Jest (or Node) prints. Times will differ a little.</p>
+
+  <div class="choose">
+    <a href="#s1"><b>In class</b><span>Sections 1–4 follow the slides.</span></a>
+    <a href="#breaks"><b>Something broke?</b><span>Jump to the table at the bottom.</span></a>
+  </div>
+
+  <section>
+    <h2>Before you start</h2>
+    <ol class="steps">
+      <li>A folder for today, opened in VS Code:
+        <div class="cmdwrap"><pre class="cmd"><code>mkdir tdd-jest
+cd tdd-jest
+code .</code></pre><button type="button" class="copy">Copy</button></div></li>
+      <li><code>node --version</code> prints v18 or newer. <b>Save</b> before every run.</li>
+    </ol>
+  </section>
+
+  <section id="s1">
+    <h2><span class="n">1 ·</span> Export it, then require it</h2>
+    <p>Files: <code>factorial.js</code> and <code>runner.js</code>. Type each block yourself (copy only if you fall behind), <b>save</b>, then run.</p>
+    <p class="label">Step 1 · factorial.js</p>
+    <div class="cmdwrap"><pre class="cmd"><code>function factorial(num) {
+  let product = 1;
+
+  for (let i = num; i &gt; 0; i--) {
+    product = product * i;
+  }
+
+  return product;
+}</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>node runner.js</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see"></pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 2 · runner.js</p>
+    <div class="cmdwrap"><pre class="cmd"><code>console.log(factorial(4));</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>node runner.js</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">/Users/you/tdd-jest/runner.js:1
+console.log(factorial(4));
+        ^
+
+ReferenceError: factorial is not defined
+    at Object.&lt;anonymous&gt; (/Users/you/tdd-jest/runner.js:1:9)</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>1</b> · red</p>
+    <p class="label">Step 3 · factorial.js (add below)</p>
+    <div class="cmdwrap"><pre class="cmd"><code>module.exports = factorial;</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>node runner.js</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">/Users/you/tdd-jest/runner.js:1
+console.log(factorial(4));
+        ^
+
+ReferenceError: factorial is not defined
+    at Object.&lt;anonymous&gt; (/Users/you/tdd-jest/runner.js:1:9)</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>1</b> · red</p>
+    <p class="label">Step 4 · in runner.js, change <code>console.log(factorial(4));</code> to <code>const factorial = require(&quot;./factorial.js&quot;);
+
+console.log(factorial(4));</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>const factorial = require(&quot;./factorial.js&quot;);
+
+console.log(factorial(4));</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>node runner.js</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">24</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">2 ·</span> Set up Jest: package.json</h2>
+    <p>Files: <code>package.json</code>. Type each block yourself (copy only if you fall behind), <b>save</b>, then run.</p>
+    <p class="label">First, in your terminal:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>npm init -y</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">Wrote to /Users/you/tdd-jest/package.json:
+
+{
+  &quot;name&quot;: &quot;tdd-jest&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;&quot;,
+  &quot;main&quot;: &quot;index.js&quot;,
+  &quot;scripts&quot;: {
+    &quot;test&quot;: &quot;echo \&quot;Error: no test specified\&quot; &amp;&amp; exit 1&quot;
+  },
+  &quot;keywords&quot;: [],
+  &quot;author&quot;: &quot;&quot;,
+  &quot;license&quot;: &quot;ISC&quot;,
+  &quot;type&quot;: &quot;commonjs&quot;
+}</pre>
+    <p class="label">Step 1 · in package.json, change <code>&quot;test&quot;: &quot;echo \&quot;Error: no test specified\&quot; &amp;&amp; exit 1&quot;</code> to <code>&quot;test&quot;: &quot;jest&quot;</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>{
+  &quot;name&quot;: &quot;tdd-jest&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;&quot;,
+  &quot;main&quot;: &quot;index.js&quot;,
+  &quot;scripts&quot;: {
+    &quot;test&quot;: &quot;jest&quot;
+  },
+  &quot;keywords&quot;: [],
+  &quot;author&quot;: &quot;&quot;,
+  &quot;license&quot;: &quot;ISC&quot;,
+  &quot;type&quot;: &quot;commonjs&quot;
+}</code></pre><button type="button" class="copy">Copy</button></div>
+    <p>Save, then install Jest (once per project):</p>
+    <div class="cmdwrap"><pre class="cmd"><code>npm install --save-dev jest</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">added … packages, and audited … packages in …s     ← numbers vary; this downloads Jest into node_modules/</pre>
+    <div class="cmdwrap"><pre class="cmd"><code>npm test</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">
+&gt; tdd-jest@1.0.0 test
+&gt; jest
+
+No tests found, exiting with code 1
+Run with `--passWithNoTests` to exit with code 0
+In /Users/you/tdd-jest
+  3 files checked.
+  testMatch: **/__tests__/**/*.?([mc])[jt]s?(x), **/?(*.)+(spec|test).?([mc])[jt
+]s?(x) - 0 matches
+  testPathIgnorePatterns: /node_modules/ - 3 matches
+  testRegex:  - 0 matches
+Pattern:  - 0 matches</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>1</b> · red</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3 ·</span> Your first Jest test</h2>
+    <p>Files: <code>factorial.spec.js</code>. Type each block yourself (copy only if you fall behind), <b>save</b>, then run.</p>
+    <p class="label">Step 1 · factorial.spec.js</p>
+    <div class="cmdwrap"><pre class="cmd"><code>const factorial = require(&quot;./factorial.js&quot;);
+
+test(&quot;tests factorial(4) = 24&quot;, () =&gt; {
+  expect(factorial(4)).toBe(24);
+});</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>npm test</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">
+&gt; tdd-jest@1.0.0 test
+&gt; jest
+
+ PASS  ./factorial.spec.js
+  ✓ tests factorial(4) = 24 (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        0.3 s
+Ran all test suites.</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 2 · in factorial.spec.js, change <code>toBe(24)</code> to <code>toBe(23)</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>const factorial = require(&quot;./factorial.js&quot;);
+
+test(&quot;tests factorial(4) = 24&quot;, () =&gt; {
+  expect(factorial(4)).toBe(23);
+});</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>npm test</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">
+&gt; tdd-jest@1.0.0 test
+&gt; jest
+
+ FAIL  ./factorial.spec.js
+  ✕ tests factorial(4) = 24 (3 ms)
+
+  ● tests factorial(4) = 24
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 23
+    Received: 24
+
+      2 |
+      3 | test(&quot;tests factorial(4) = 24&quot;, () =&gt; {
+    &gt; 4 |   expect(factorial(4)).toBe(23);
+        |                        ^
+      5 | });
+      6 |
+
+      at Object.toBe (factorial.spec.js:4:24)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.3 s
+Ran all test suites.</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>1</b> · red</p>
+    <p class="label">Step 3 · in factorial.spec.js, change <code>toBe(23)</code> to <code>toBe(24)</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>const factorial = require(&quot;./factorial.js&quot;);
+
+test(&quot;tests factorial(4) = 24&quot;, () =&gt; {
+  expect(factorial(4)).toBe(24);
+});</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>npm test</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">
+&gt; tdd-jest@1.0.0 test
+&gt; jest
+
+ PASS  ./factorial.spec.js
+  ✓ tests factorial(4) = 24 (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        0.3 s
+Ran all test suites.</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">4 ·</span> Group with describe, skip with x</h2>
+    <p class="label">Step 1 · factorial.spec.js becomes:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>const factorial = require(&quot;./factorial.js&quot;);
+
+describe(&quot;tests factorial for small numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(0) = 1&quot;, () =&gt; {
+    expect(factorial(0)).toBe(1);
+  });
+
+  test(&quot;tests factorial(3) = 6&quot;, () =&gt; {
+    expect(factorial(3)).toBe(6);
+  });
+});
+
+describe(&quot;tests factorial for large numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(10) = 3628800&quot;, () =&gt; {
+    expect(factorial(10)).toBe(3628800);
+  });
+
+  test(&quot;tests factorial(20) = 2432902008176640000&quot;, () =&gt; {
+    expect(factorial(20)).toBe(2432902008176640000);
+  });
+});</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>npm test</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">
+&gt; tdd-jest@1.0.0 test
+&gt; jest
+
+ PASS  ./factorial.spec.js
+  tests factorial for small numbers
+    ✓ tests factorial(0) = 1 (2 ms)
+    ✓ tests factorial(3) = 6
+  tests factorial for large numbers
+    ✓ tests factorial(10) = 3628800
+    ✓ tests factorial(20) = 2432902008176640000
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        0.3 s
+Ran all test suites.</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 2 · in factorial.spec.js, change <code>test(&quot;tests factorial(3) = 6&quot;</code> to <code>xtest(&quot;tests factorial(3) = 6&quot;</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>const factorial = require(&quot;./factorial.js&quot;);
+
+describe(&quot;tests factorial for small numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(0) = 1&quot;, () =&gt; {
+    expect(factorial(0)).toBe(1);
+  });
+
+  xtest(&quot;tests factorial(3) = 6&quot;, () =&gt; {
+    expect(factorial(3)).toBe(6);
+  });
+});
+
+describe(&quot;tests factorial for large numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(10) = 3628800&quot;, () =&gt; {
+    expect(factorial(10)).toBe(3628800);
+  });
+
+  test(&quot;tests factorial(20) = 2432902008176640000&quot;, () =&gt; {
+    expect(factorial(20)).toBe(2432902008176640000);
+  });
+});</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>npm test</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">
+&gt; tdd-jest@1.0.0 test
+&gt; jest
+
+ PASS  ./factorial.spec.js
+  tests factorial for small numbers
+    ✓ tests factorial(0) = 1 (2 ms)
+    ○ skipped tests factorial(3) = 6
+  tests factorial for large numbers
+    ✓ tests factorial(10) = 3628800
+    ✓ tests factorial(20) = 2432902008176640000
+
+Test Suites: 1 passed, 1 total
+Tests:       1 skipped, 3 passed, 4 total
+Snapshots:   0 total
+Time:        0.3 s
+Ran all test suites.</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 3 · in factorial.spec.js, change <code>describe(&quot;tests factorial for large numbers&quot;</code> to <code>xdescribe(&quot;tests factorial for large numbers&quot;</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>const factorial = require(&quot;./factorial.js&quot;);
+
+describe(&quot;tests factorial for small numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(0) = 1&quot;, () =&gt; {
+    expect(factorial(0)).toBe(1);
+  });
+
+  xtest(&quot;tests factorial(3) = 6&quot;, () =&gt; {
+    expect(factorial(3)).toBe(6);
+  });
+});
+
+xdescribe(&quot;tests factorial for large numbers&quot;, () =&gt; {
+  test(&quot;tests factorial(10) = 3628800&quot;, () =&gt; {
+    expect(factorial(10)).toBe(3628800);
+  });
+
+  test(&quot;tests factorial(20) = 2432902008176640000&quot;, () =&gt; {
+    expect(factorial(20)).toBe(2432902008176640000);
+  });
+});</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>npm test</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">
+&gt; tdd-jest@1.0.0 test
+&gt; jest
+
+ PASS  ./factorial.spec.js
+  tests factorial for small numbers
+    ✓ tests factorial(0) = 1 (2 ms)
+    ○ skipped tests factorial(3) = 6
+  tests factorial for large numbers
+    ○ skipped tests factorial(10) = 3628800
+    ○ skipped tests factorial(20) = 2432902008176640000
+
+Test Suites: 1 passed, 1 total
+Tests:       3 skipped, 1 passed, 4 total
+Snapshots:   0 total
+Time:        0.3 s
+Ran all test suites.</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+  </section>
+  <section id="docker">
+    <h2>Bonus · run Jest in a container</h2>
+    <p>First a <code>.dockerignore</code>, so your laptop's <code>node_modules</code> isn't copied over the container's:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>node_modules</code></pre><button type="button" class="copy">Copy</button></div>
+    <p>Then the lesson's Dockerfile, saved as <code>Dockerfile</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+RUN npm install --save-dev jest
+
+COPY . .
+
+CMD ["npm", "test"]</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>docker build -t jest-tests .
+docker run --rm jest-tests
+echo $?</code></pre><button type="button" class="copy">Copy</button></div>
+    <p>Same PASS output as on your laptop, and exit code 0. That exit code is what a CI pipeline checks before it lets anyone merge.</p>
+  </section>
+
+  <section>
+    <h2>Check: you're done when…</h2>
+    <ol class="steps">
+      <li><code>node runner.js</code> prints 24, and you can explain why it needed both <code>module.exports</code> and <code>require</code></li>
+      <li>You saw <code>Expected: 23 / Received: 24</code>, then changed it back</li>
+      <li><code>npm test</code> shows two groups and <code>3 skipped, 1 passed</code></li>
+    </ol>
+  </section>
+
+  <section id="breaks">
+    <h2>When something breaks</h2>
+    <table>
+      <tr><th>You see</th><th>It means</th><th>Fix</th></tr>
+      <tr><td><code>ReferenceError: factorial is not defined</code></td><td>runner.js never required it</td><td><code>const factorial = require("./factorial.js");</code></td></tr>
+      <tr><td><code>TypeError: factorial is not a function</code></td><td>factorial.js doesn't export it</td><td>Add <code>module.exports = factorial;</code> at the end</td></tr>
+      <tr><td><code>Cannot find module './factorial.js'</code></td><td>Wrong path or file name</td><td><code>./</code> = same folder; check the spelling</td></tr>
+      <tr><td><code>Error: no test specified</code></td><td>package.json still has the default test script</td><td><code>"test": "jest"</code>, save</td></tr>
+      <tr><td><code>jest: command not found</code> / <code>not found</code></td><td>Jest isn't installed in this project</td><td><code>npm install --save-dev jest</code> (or <code>npm install</code> in a repo that lists it)</td></tr>
+      <tr><td><code>No tests found, exiting with code 1</code></td><td>No file ends in <code>.spec.js</code> / <code>.test.js</code></td><td>Name it <code>factorial.spec.js</code></td></tr>
+      <tr><td><code>Received: serializes to the same string</code></td><td><code>toBe</code> on arrays/objects checks it's the SAME one</td><td>Use <code>toEqual</code></td></tr>
+    </table>
+  </section>
+
+</main>
+<script>
+  document.querySelectorAll('.copy').forEach((b) => b.onclick = async () => {
+    await navigator.clipboard.writeText(b.previousElementSibling.innerText.trim()); b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1500)
+  })
+</script>
+</body>
+</html>

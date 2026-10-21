@@ -1,0 +1,155 @@
+/* Shared slide engine styles — graph-paper "blueprint notebook" look */
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --paper: #f4f6f9;
+  --grid: #dce3ee;
+  --ink: #1b2230;
+  --muted: #5b6577;
+  --blue: #2552c9;
+  --green: #13795b;
+  --red: #c8372d;
+  --sticky: #ffe76a;
+  --display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #c9d1dd; overflow: hidden; font-family: var(--body); color: var(--ink); }
+
+/* 1600×900 stage scaled to the window by deck.js */
+.stage { position: absolute; top: 50%; left: 50%; width: 1600px; height: 900px; transform-origin: center; }
+.slide {
+  position: absolute; inset: 0; display: none; flex-direction: column; padding: 72px 96px 64px;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px; background-position: -1px -1px;
+  box-shadow: 0 10px 40px rgb(27 34 48 / 0.25);
+}
+.slide.active { display: flex; }
+.slide > .notes { display: none; }
+
+/* Segment strip: where we are in the lecture */
+.seg { position: absolute; top: 24px; left: 96px; font: 600 18px var(--mono); color: var(--muted); }
+.seg b { color: var(--blue); font-weight: 600; }
+.pageno { position: absolute; bottom: 22px; right: 32px; font: 16px var(--mono); color: var(--muted); }
+.progress { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--blue); transition: width .25s; }
+
+h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: -0.02em; line-height: 1.05; }
+h1 { font-size: 112px; font-weight: 800; }
+h2 { font-size: 64px; font-weight: 700; margin-bottom: 36px; }
+h3 { font-size: 36px; font-weight: 700; margin-bottom: 12px; }
+p, li { font-size: 34px; line-height: 1.4; }
+p { margin: 0 0 20px; max-width: 30em; }
+ul, ol { margin: 0; padding-left: 1.1em; }
+li { margin-bottom: 14px; max-width: 30em; }
+li::marker { color: var(--blue); }
+code { font-family: var(--mono); font-size: .85em; background: #fff; border: 1px solid var(--grid); padding: 0 .25em; border-radius: 4px; }
+pre { font: 24px/1.45 var(--mono); background: var(--ink); color: #e9edf5; padding: 28px 32px; border-radius: 10px; margin: 0; overflow: hidden; white-space: pre-wrap; }
+pre .c { color: #8fa1bd; }
+.muted { color: var(--muted); }
+.small p, .small li { font-size: 28px; }
+
+/* Title slide */
+.slide.title { justify-content: center; }
+.slide.title h1 { max-width: 13em; }
+.slide.title .kicker { font: 600 26px var(--mono); color: var(--blue); margin-bottom: 28px; }
+.slide.title .sub { font-size: 36px; color: var(--muted); margin-top: 28px; }
+
+/* Statement slide: one big idea */
+.slide.statement { justify-content: center; }
+.slide.statement h2 { font-size: 88px; max-width: 15em; margin: 0; }
+.slide.statement p { margin-top: 32px; font-size: 38px; color: var(--muted); }
+
+/* Diagram slide: tldraw export fills the stage */
+.slide.diagram { padding: 56px 64px 48px; align-items: center; justify-content: center; }
+.slide.diagram img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; background: #f9fafb; box-shadow: 0 2px 0 var(--grid); cursor: zoom-in; }
+.slide.diagram .src { position: absolute; bottom: 20px; left: 64px; font: 15px var(--mono); color: var(--muted); }
+
+/* "Ask the class" — a tldraw-style sticky note */
+.slide.ask { justify-content: center; align-items: center; }
+.sticky {
+  background: var(--sticky); width: 1080px; padding: 64px 72px; transform: rotate(-1.5deg);
+  box-shadow: 0 18px 30px -12px rgb(27 34 48 / 0.35); font-family: var(--display);
+}
+.sticky .who { font: 600 24px var(--mono); margin-bottom: 18px; }
+.sticky .q { font-size: 60px; font-weight: 700; line-height: 1.12; }
+.sticky .how { font: 28px var(--body); margin-top: 28px; }
+
+/* Activity slide */
+.slide.activity { border-top: 18px solid var(--green); }
+.slide.activity h2 { color: var(--green); padding-right: 330px; }
+.steps { counter-reset: s; list-style: none; padding: 0; }
+.steps li { counter-increment: s; position: relative; padding-left: 64px; }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 2px; width: 44px; height: 44px; border-radius: 50%; background: var(--green); color: #fff; font: 700 26px/44px var(--display); text-align: center; }
+.countdown {
+  position: absolute; right: 96px; top: 72px; font: 700 96px var(--mono); color: var(--green);
+  background: #fff; border: 4px solid var(--green); border-radius: 16px; padding: 4px 28px; cursor: pointer; user-select: none;
+}
+.countdown.done { color: #fff; background: var(--red); border-color: var(--red); }
+.countdown::after { content: 'click to start · R to reset'; display: block; font: 16px var(--mono); color: var(--muted); text-align: center; }
+.countdown.running::after { content: 'click to pause'; }
+.countdown.done::after { content: "time's up"; color: #fff; }
+
+/* Layout helpers */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+.cols.wide-left { grid-template-columns: 1.35fr 1fr; }
+.card { background: #fff; border: 2px solid var(--ink); border-radius: 10px; padding: 28px 32px; }
+.card.blue { border-color: var(--blue); } .card.green { border-color: var(--green); } .card.red { border-color: var(--red); }
+.card h3 { font-size: 32px; }
+.card p, .card li { font-size: 27px; }
+.tag { display: inline-block; font: 600 20px var(--mono); padding: 4px 12px; border-radius: 6px; background: var(--ink); color: #fff; margin-right: 8px; }
+.tag.blue { background: var(--blue); } .tag.green { background: var(--green); } .tag.red { background: var(--red); }
+.bottomline { margin-top: auto; font: 700 34px var(--display); border-left: 8px solid var(--blue); padding-left: 24px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.grid2x4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.grid2x4 .card { padding: 22px 24px; }
+.grid2x4 .card p { font-size: 25px; margin: 0; }
+.grid2x4 .card b { display: block; font: 700 22px var(--mono); color: var(--blue); margin-bottom: 8px; }
+
+/* Click-to-zoom overlay for diagrams */
+.zoom { position: fixed; inset: 0; background: rgb(27 34 48 / .92); display: none; align-items: center; justify-content: center; z-index: 50; cursor: zoom-out; }
+.zoom.on { display: flex; }
+.zoom img { max-width: 98vw; max-height: 98vh; }
+
+/* Overview grid (O key) */
+.overview { position: fixed; inset: 0; background: #e8edf4; overflow: auto; display: none; z-index: 60; padding: 32px; }
+.overview.on { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; align-content: start; }
+.overview button { text-align: left; font: 16px var(--body); background: #fff; border: 2px solid transparent; border-radius: 8px; padding: 14px; cursor: pointer; }
+.overview button.cur { border-color: var(--blue); }
+.overview button span { display: block; font: 12px var(--mono); color: var(--muted); }
+.help { position: fixed; bottom: 10px; left: 12px; font: 12px var(--mono); color: #5b6577; opacity: .7; z-index: 40; }
+
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Presenter window */
+body.presenter { overflow: auto; background: #10151f; color: #e9edf5; font-family: var(--body); }
+.pv { display: grid; grid-template-columns: 1fr 380px; gap: 24px; padding: 24px; min-height: 100vh; }
+.pv .now { font: 700 30px var(--display); margin-bottom: 8px; }
+.pv .segname { font: 600 16px var(--mono); color: #8fa1bd; }
+.pv .notesbox { font-size: 23px; line-height: 1.5; background: #1a2130; border-radius: 10px; padding: 20px 26px; margin-top: 14px; }
+.pv .notesbox p, .pv .notesbox li { font-size: 23px; max-width: none; }
+.pv .notesbox b { color: #ffe76a; }
+.pv .notesbox code { background: #0b0f17; color: #9fe0ff; border-color: #34405a; }
+.pv .next code { background: #0b0f17; color: #9fe0ff; border-color: #34405a; }
+.pv .side { display: flex; flex-direction: column; gap: 16px; }
+.pv .clock { font: 700 56px var(--mono); }
+.pv .clock.late { color: #ff8a80; } .pv .clock.ok { color: #7ee2b8; }
+.pv .meta { font: 15px var(--mono); color: #8fa1bd; }
+.pv .next { background: #1a2130; border-radius: 10px; padding: 14px 18px; font-size: 18px; }
+.pv button { font: 600 18px var(--body); padding: 12px; border-radius: 8px; border: 0; cursor: pointer; }
+
+/* Database table mock (rows and columns on a slide) */
+.dbt { border-collapse: collapse; font: 26px var(--mono); background: #fff; }
+.dbt caption { text-align: left; font: 700 30px var(--mono); color: var(--blue); padding-bottom: 10px; }
+.dbt th, .dbt td { border: 2px solid var(--ink); padding: 10px 18px; text-align: left; }
+.dbt th { background: #e8ecf3; }
+.dbt td.pk, .dbt th.pk { background: #fff6c4; }
+.dbt td.fk, .dbt th.fk { background: #e3f5ec; }
+.dbt.types td:nth-child(2) { color: var(--blue); font-weight: 600; }
+.dbt.small { font-size: 22px; }
+.dbt.small th, .dbt.small td { padding: 7px 14px; }

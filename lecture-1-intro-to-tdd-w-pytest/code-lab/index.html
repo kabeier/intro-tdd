@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Lab 1 · Intro to TDD with pytest</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f4f6f9; --grid:#dce3ee; --ink:#1b2230; --muted:#5b6577; --blue:#2552c9; --green:#13795b; --sticky:#ffe76a; --red:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: var(--ink); font-size: 18px; line-height: 1.55;
+    background: var(--paper) linear-gradient(var(--grid) 1px, transparent 1px) -1px -1px / 40px 40px,
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px) -1px -1px / 40px 40px; }
+  main { max-width: 900px; margin: 0 auto; padding: 48px 28px 80px; }
+  .back { color: var(--blue); font-weight: 700; }
+  h1 { font: 800 clamp(40px, 6vw, 64px)/0.98 'Bricolage Grotesque', sans-serif; letter-spacing: -0.03em; margin: 18px 0 14px; }
+  .lede { color: var(--muted); font-size: 20px; margin: 0 0 28px; max-width: 62ch; }
+  h2 { font: 800 28px/1.15 'Bricolage Grotesque', sans-serif; margin: 0 0 10px; }
+  h3 { font: 800 21px 'Bricolage Grotesque', sans-serif; margin: 26px 0 6px; }
+  section { background: #fff; border: 2px solid var(--ink); border-radius: 4px; padding: 28px; margin-bottom: 28px; }
+  section > p { margin: 0 0 14px; }
+  .choose { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .choose a { display: block; background: #fff; border: 2px solid var(--grid); border-radius: 4px; padding: 16px 18px; color: var(--ink); text-decoration: none; }
+  .choose a:hover, .choose a:focus-visible { border-color: var(--blue); }
+  .choose b { display: block; color: var(--blue); font-size: 20px; }
+  .choose span { color: var(--muted); font-size: 16px; }
+  @media (max-width: 700px) { .choose { grid-template-columns: 1fr; } }
+  ol.steps { padding-left: 1.4em; margin: 0 0 8px; }
+  ol.steps > li { margin-bottom: 14px; }
+  ol.steps > li::marker { font-weight: 700; color: var(--blue); }
+  code { font-size: 0.9em; background: #e8ecf3; padding: 1px 5px; border-radius: 3px; }
+  .cmdwrap { position: relative; margin: 8px 0 6px; }
+  pre.cmd { background: var(--ink); color: #fff; padding: 16px 18px; padding-right: 90px; border-radius: 4px; overflow-x: auto; margin: 0; font-size: 15px; }
+  pre.cmd code { background: none; padding: 0; }
+  pre.json { max-height: 420px; }
+  pre.pic { background: #fff; border: 2px solid var(--grid); border-radius: 4px; padding: 14px 18px; overflow-x: auto; font-size: 15px; margin: 8px 0 14px; }
+  .copy { position: absolute; top: 10px; right: 10px; font: 700 14px 'Atkinson Hyperlegible'; padding: 6px 12px; border-radius: 4px; border: 0; background: var(--sticky); color: var(--ink); cursor: pointer; }
+  .note { margin: 10px 0 0; padding: 14px 18px; background: var(--sticky); transform: rotate(-0.4deg); }
+  .req { border: 2px solid var(--grid); border-radius: 4px; padding: 16px 18px; margin: 14px 0; }
+  .req h3 { margin: 0 0 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .method { font: 700 15px 'Atkinson Hyperlegible'; color: #fff; background: var(--blue); padding: 2px 8px; border-radius: 3px; }
+  .method.post { background: var(--green); }
+  .req dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+  .req dt { font-weight: 700; color: var(--muted); }
+  .req dd { margin: 0; overflow-wrap: anywhere; }
+  .expect { color: var(--green); font-weight: 700; }
+  .bad { color: var(--red); font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { font-size: 15px; color: var(--muted); }
+  .dl { display: inline-block; background: var(--sticky); color: var(--ink); font-weight: 700; text-decoration: none; padding: 12px 18px; border-radius: 4px; margin: 4px 0 10px; }
+  details { margin-top: 10px; } summary { cursor: pointer; font-weight: 700; color: var(--blue); }
+  a { color: var(--blue); }
+  a:focus-visible, summary:focus-visible, .copy:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  pre.see { background: #fff; border: 2px solid var(--grid); border-left: 8px solid var(--green); border-radius: 4px; padding: 12px 16px; overflow-x: auto; font-size: 15px; margin: 6px 0 12px; }
+  pre.see .e { color: var(--red); white-space: pre-wrap; }
+  .label { font-weight: 700; color: var(--green); font-size: 15px; margin-top: 6px; }
+  .os { display: grid; grid-template-columns: 1fr; gap: 0 20px; }
+  .os h4 { margin: 6px 0 2px; font-size: 16px; }
+  @media (max-width: 700px) { .os { grid-template-columns: 1fr; } }
+  section h2 .n { color: var(--blue); }
+  td code { overflow-wrap: anywhere; }
+  .os > div, ol.steps > li { min-width: 0; }
+  @media (max-width: 700px) { table { display: block; overflow-x: auto; } section { padding: 18px; } }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../../">← TDD home</a>
+  <h1>Code Lab 1: red, green, refactor with pytest</h1>
+  <p class="lede">Type along with Lecture 1. Every step shows the code, the command, and what real pytest prints, including the red runs: seeing a test fail first is the point. Your platform line, paths and times will differ a little.</p>
+
+  <div class="choose">
+    <a href="#s1"><b>In class</b><span>Sections 1–3 follow the slides.</span></a>
+    <a href="#breaks"><b>Something broke?</b><span>Jump to the table at the bottom.</span></a>
+  </div>
+
+  <section>
+    <h2>Before you start</h2>
+    <ol class="steps">
+      <li>Install pytest and check it:
+        <div class="cmdwrap"><pre class="cmd"><code>pip install pytest
+pytest --version</code></pre><button type="button" class="copy">Copy</button></div>
+        <code>pip</code> not found? Use <code>pip3</code>, or <code>python3 -m pip install pytest</code> (then run tests with <code>python3 -m pytest</code>).</li>
+      <li>A folder for today, opened in VS Code:
+        <div class="cmdwrap"><pre class="cmd"><code>mkdir tdd-pytest
+cd tdd-pytest
+code .</code></pre><button type="button" class="copy">Copy</button></div></li>
+      <li>Make <code>example.py</code> as an <b>empty</b> file for now. <b>Save</b> (Ctrl+S / Cmd+S) before every run.</li>
+    </ol>
+  </section>
+
+  <section id="s1">
+    <h2><span class="n">1 ·</span> Red first, then green</h2>
+    <p>Files: <code>test_example.py</code> and <code>example.py</code>. Type each block yourself (copy only if you fall behind), <b>save</b>, then run.</p>
+    <p class="label">Step 1 · test_example.py</p>
+    <div class="cmdwrap"><pre class="cmd"><code>from example import add_two_numbers
+
+def test_add_two_numbers():
+    assert add_two_numbers(2, 2) == 4</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest test_example.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0
+rootdir: /Users/you/tdd-pytest
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_______________________ ERROR collecting test_example.py _______________________
+ImportError while importing test module &#x27;/Users/you/tdd-pytest/test_example.py&#x27;.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib64/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+test_example.py:1: in &lt;module&gt;
+    from example import add_two_numbers
+E   ImportError: cannot import name &#x27;add_two_numbers&#x27; from &#x27;example&#x27; (/Users/you/tdd-pytest/example.py)
+=========================== short test summary info ============================
+ERROR test_example.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>2</b> · red</p>
+    <p class="label">Step 2 · example.py</p>
+    <div class="cmdwrap"><pre class="cmd"><code>def add_two_numbers(num_one, num_two):
+    answer = num_one + num_two
+    return answer</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest test_example.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0
+rootdir: /Users/you/tdd-pytest
+collected 1 item
+
+test_example.py .                                                        [100%]
+
+============================== 1 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 3 · example.py becomes:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>def add_two_numbers(num_one, num_two):
+    return num_one + num_two</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest test_example.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0
+rootdir: /Users/you/tdd-pytest
+collected 1 item
+
+test_example.py .                                                        [100%]
+
+============================== 1 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">2 ·</span> Assertions: anything True or False</h2>
+    <p>Files: <code>test_assertions.py</code> and <code>test_shopping.py</code>. Type each block yourself (copy only if you fall behind), <b>save</b>, then run.</p>
+    <p class="label">Step 1 · test_assertions.py</p>
+    <div class="cmdwrap"><pre class="cmd"><code>import math
+
+def test_comparisons():
+    assert 2 + 2 == 4
+    assert 3 * 5 != 11
+    assert 10 &gt; 5
+    assert math.isclose(0.1 + 0.2, 0.3)</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest -v test_assertions.py test_shopping.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0 -- /tmp/claude-1000/-mnt-storage-CP-new-Lectures/45d208d5-4d9d-4dff-9af7-2084ba731675/scratchpad/venv-pyte/bin/python3
+rootdir: /Users/you/tdd-pytest
+collecting ... collected 1 item
+
+test_assertions.py::test_comparisons PASSED                              [100%]
+
+============================== 1 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 2 · test_assertions.py (add below)</p>
+    <div class="cmdwrap"><pre class="cmd"><code>def test_membership_and_strings():
+    assert &quot;apple&quot; in [&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;]
+    assert &quot;grape&quot; not in [&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;]
+    assert &quot;Hello, world!&quot;.startswith(&quot;Hello&quot;)</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest -v test_assertions.py test_shopping.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0 -- /tmp/claude-1000/-mnt-storage-CP-new-Lectures/45d208d5-4d9d-4dff-9af7-2084ba731675/scratchpad/venv-pyte/bin/python3
+rootdir: /Users/you/tdd-pytest
+collecting ... collected 2 items
+
+test_assertions.py::test_comparisons PASSED                              [ 50%]
+test_assertions.py::test_membership_and_strings PASSED                   [100%]
+
+============================== 2 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 3 · test_shopping.py</p>
+    <div class="cmdwrap"><pre class="cmd"><code>import pytest
+
+def test_divide_by_zero():
+    with pytest.raises(ZeroDivisionError):
+        1 / 0</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest -v test_assertions.py test_shopping.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0 -- /tmp/claude-1000/-mnt-storage-CP-new-Lectures/45d208d5-4d9d-4dff-9af7-2084ba731675/scratchpad/venv-pyte/bin/python3
+rootdir: /Users/you/tdd-pytest
+collecting ... collected 3 items
+
+test_assertions.py::test_comparisons PASSED                              [ 33%]
+test_assertions.py::test_membership_and_strings PASSED                   [ 66%]
+test_shopping.py::test_divide_by_zero PASSED                             [100%]
+
+============================== 3 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 4 · test_shopping.py (add below)</p>
+    <div class="cmdwrap"><pre class="cmd"><code>def test_shopping_list():
+    cart = [&quot;milk&quot;, &quot;eggs&quot;]
+    assert sorted(cart) == [&quot;eggs&quot;, &quot;milk&quot;, &quot;jam&quot;]</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest -v test_assertions.py test_shopping.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0 -- /tmp/claude-1000/-mnt-storage-CP-new-Lectures/45d208d5-4d9d-4dff-9af7-2084ba731675/scratchpad/venv-pyte/bin/python3
+rootdir: /Users/you/tdd-pytest
+collecting ... collected 4 items
+
+test_assertions.py::test_comparisons PASSED                              [ 25%]
+test_assertions.py::test_membership_and_strings PASSED                   [ 50%]
+test_shopping.py::test_divide_by_zero PASSED                             [ 75%]
+test_shopping.py::test_shopping_list FAILED                              [100%]
+
+=================================== FAILURES ===================================
+______________________________ test_shopping_list ______________________________
+
+    def test_shopping_list():
+        cart = [&quot;milk&quot;, &quot;eggs&quot;]
+&gt;       assert sorted(cart) == [&quot;eggs&quot;, &quot;milk&quot;, &quot;jam&quot;]
+E       AssertionError: assert [&#x27;eggs&#x27;, &#x27;milk&#x27;] == [&#x27;eggs&#x27;, &#x27;milk&#x27;, &#x27;jam&#x27;]
+E         
+E         Right contains one more item: &#x27;jam&#x27;
+E         
+E         Full diff:
+E           [
+E               &#x27;eggs&#x27;,
+E               &#x27;milk&#x27;,
+E         -     &#x27;jam&#x27;,
+E           ]
+
+test_shopping.py:9: AssertionError
+=========================== short test summary info ============================
+FAILED test_shopping.py::test_shopping_list - AssertionError: assert [&#x27;eggs&#x27;,...
+========================= 1 failed, 3 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>1</b> · red</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3 ·</span> Fake the keyboard, catch the screen</h2>
+    <p>Files: <code>test_input.py</code> and <code>test_print.py</code>. Type each block yourself (copy only if you fall behind), <b>save</b>, then run.</p>
+    <p class="label">Step 1 · test_input.py</p>
+    <div class="cmdwrap"><pre class="cmd"><code>def get_user_input():
+    user_input = input(&quot;Enter a number: &quot;)
+    return int(user_input)
+
+def test_get_user_input(monkeypatch):
+    # Simulate user input
+    monkeypatch.setattr(&quot;builtins.input&quot;, lambda _: &quot;42&quot;)
+    result = get_user_input()
+    assert result == 42</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest -v test_input.py test_print.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0 -- /tmp/claude-1000/-mnt-storage-CP-new-Lectures/45d208d5-4d9d-4dff-9af7-2084ba731675/scratchpad/venv-pyte/bin/python3
+rootdir: /Users/you/tdd-pytest
+collecting ... collected 1 item
+
+test_input.py::test_get_user_input PASSED                                [100%]
+
+============================== 1 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 2 · test_print.py</p>
+    <div class="cmdwrap"><pre class="cmd"><code>def test_printing(capsys):
+    print(&quot;Hello, pytest!&quot;)
+    captured = capsys.readouterr()
+    assert captured.out == &quot;Hello, pytest!\n&quot;</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest -v test_input.py test_print.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0 -- /tmp/claude-1000/-mnt-storage-CP-new-Lectures/45d208d5-4d9d-4dff-9af7-2084ba731675/scratchpad/venv-pyte/bin/python3
+rootdir: /Users/you/tdd-pytest
+collecting ... collected 2 items
+
+test_input.py::test_get_user_input PASSED                                [ 50%]
+test_print.py::test_printing PASSED                                      [100%]
+
+============================== 2 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+    <p class="label">Step 3 · test_input.py (add below)</p>
+    <div class="cmdwrap"><pre class="cmd"><code>def get_multiple_inputs():
+    num1 = int(input(&quot;Enter the first number: &quot;))
+    num2 = int(input(&quot;Enter the second number: &quot;))
+    return num1 + num2
+
+def test_get_multiple_inputs(monkeypatch):
+    user_inputs = [&quot;5&quot;, &quot;7&quot;]
+    input_values = iter(user_inputs)
+    monkeypatch.setattr(&quot;builtins.input&quot;, lambda _: next(input_values))
+    assert get_multiple_inputs() == 5 + 7</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>pytest -v test_input.py test_print.py</code></pre><button type="button" class="copy">Copy</button></div>
+<pre class="see">============================= test session starts ==============================
+platform linux -- Python 3.14.7, pytest-8.1.1, pluggy-1.7.0 -- /tmp/claude-1000/-mnt-storage-CP-new-Lectures/45d208d5-4d9d-4dff-9af7-2084ba731675/scratchpad/venv-pyte/bin/python3
+rootdir: /Users/you/tdd-pytest
+collecting ... collected 3 items
+
+test_input.py::test_get_user_input PASSED                                [ 33%]
+test_input.py::test_get_multiple_inputs PASSED                           [ 66%]
+test_print.py::test_printing PASSED                                      [100%]
+
+============================== 3 passed in 0.02s</pre>
+    <p class="note">Exit code (<code>echo $?</code>): <b>0</b> · green</p>
+  </section>
+  <section id="docker">
+    <h2>Bonus · run the tests in a container</h2>
+    <p>The lesson's Dockerfile. Save it as <code>Dockerfile</code> in <code>tdd-pytest/</code>:</p>
+    <div class="cmdwrap"><pre class="cmd"><code>FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install --no-cache-dir pytest
+
+CMD ["pytest"]</code></pre><button type="button" class="copy">Copy</button></div>
+    <div class="cmdwrap"><pre class="cmd"><code>docker build -t pytest-tests .
+docker run --rm pytest-tests
+echo $?</code></pre><button type="button" class="copy">Copy</button></div>
+    <p><b>RUN</b> happens while building (installs pytest). <b>CMD</b> runs when the container starts: the whole suite, once. With the "jam" test still failing you get <code>1 failed</code> and exit code <b>1</b>. Fix it, <b>build again</b> (COPY happens at build time), run: exit code <b>0</b>.</p>
+  </section>
+
+  <section>
+    <h2>Check: you're done when…</h2>
+    <ol class="steps">
+      <li>You saw <code>test_example.py</code> fail (ImportError) <b>before</b> it passed</li>
+      <li><code>pytest</code> with no file name runs all your test files, and they pass (after you remove "jam")</li>
+      <li>You can say what <code>.</code>, <code>F</code> and <code>E</code> mean, and what exit codes 0, 1, 2 and 5 mean</li>
+    </ol>
+  </section>
+
+  <section id="breaks">
+    <h2>When something breaks</h2>
+    <table>
+      <tr><th>You see</th><th>It means</th><th>Fix</th></tr>
+      <tr><td><code>pytest: command not found</code></td><td>pytest isn't installed, or not on your PATH</td><td><code>pip install pytest</code>, or run <code>python3 -m pytest</code></td></tr>
+      <tr><td><code>no tests ran</code> (exit code 5)</td><td>File or function name doesn't start with <code>test_</code></td><td>Rename: <code>test_example.py</code>, <code>def test_…():</code></td></tr>
+      <tr><td><code>ImportError: cannot import name …</code></td><td>The function doesn't exist yet, or is misspelled</td><td>In TDD this is your first red. Then check spelling and that the file is saved</td></tr>
+      <tr><td><code>ModuleNotFoundError: No module named 'example'</code></td><td>You're running pytest from a different folder</td><td><code>cd tdd-pytest</code>, then run again</td></tr>
+      <tr><td><code>assert 0.30000000000000004 == 0.3</code></td><td>Floating-point decimals</td><td><code>math.isclose(a, b)</code></td></tr>
+      <tr><td><code>reading from stdin while output is captured</code></td><td>The code calls <code>input()</code> during a test</td><td><code>monkeypatch.setattr("builtins.input", lambda _: "42")</code></td></tr>
+      <tr><td>The test still fails after your fix</td><td>The file isn't saved</td><td>A dot on the tab = unsaved. Ctrl+S, run again</td></tr>
+    </table>
+  </section>
+
+</main>
+<script>
+  document.querySelectorAll('.copy').forEach((b) => b.onclick = async () => {
+    await navigator.clipboard.writeText(b.previousElementSibling.innerText.trim()); b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1500)
+  })
+</script>
+</body>
+</html>

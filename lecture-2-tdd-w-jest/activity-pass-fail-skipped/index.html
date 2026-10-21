@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PASS, FAIL or SKIPPED? · TDD with Jest</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f4f6f9; --grid:#dce3ee; --ink:#1b2230; --muted:#5b6577; --blue:#2552c9; --green:#13795b; --red:#c8372d; --sticky:#ffe76a; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: var(--ink); display: grid; grid-template-rows: auto auto 1fr auto;
+    background: var(--paper) linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 40px 40px,
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 40px 40px; }
+  header { padding: 20px 36px 0; display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+  h1 { font: 800 40px 'Bricolage Grotesque', sans-serif; margin: 0; letter-spacing: -0.02em; }
+  .count { font: 700 20px 'JetBrains Mono', monospace; color: var(--muted); }
+  .bank { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 36px 0; }
+  .bank button { font: 700 22px 'JetBrains Mono', monospace; background: #fff; border: 2px solid var(--ink); border-radius: 6px; padding: 8px 18px; cursor: pointer; color: var(--ink); }
+  .bank button.hit { background: var(--green); border-color: var(--green); color: #fff; }
+  .bank button.miss { background: var(--red); border-color: var(--red); color: #fff; }
+  .bank .legend { align-self: center; font-size: 16px; color: var(--muted); margin-left: 8px; }
+  .stagearea { display: grid; place-items: center; padding: 20px 36px; }
+  .card { width: min(1100px, 100%); background: var(--sticky); padding: 48px 56px; transform: rotate(-1deg);
+    box-shadow: 0 18px 30px -12px rgb(27 34 48 / 0.35); }
+  .who { font: 700 18px 'JetBrains Mono', monospace; margin-bottom: 14px; }
+  .q { font: 700 clamp(26px, 3.2vw, 44px)/1.2 'Bricolage Grotesque', sans-serif; letter-spacing: -0.01em; }
+  .q small { display: block; font: 400 clamp(20px, 2vw, 28px)/1.45 'Atkinson Hyperlegible', sans-serif; margin-top: 18px; }
+  code { font: 600 .9em 'JetBrains Mono', monospace; }
+  .a { margin-top: 30px; background: #fff; border-left: 10px solid var(--green); padding: 18px 24px; font-size: clamp(20px, 2vw, 28px); line-height: 1.4; display: none; }
+  .a b { display: block; font: 800 clamp(28px, 3vw, 42px) 'Bricolage Grotesque', sans-serif; color: var(--green); }
+  .card.revealed .a { display: block; }
+  footer { padding: 0 36px 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font: 500 14px 'JetBrains Mono'; color: var(--muted); }
+  footer button { font: 700 16px 'Atkinson Hyperlegible'; padding: 10px 18px; border-radius: 8px; border: 2px solid var(--ink); background: #fff; cursor: pointer; }
+  footer button.go { background: var(--blue); color: #fff; border-color: var(--blue); }
+  button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .card { min-width: 0; } @media (max-width: 600px) { .card { padding: 24px 18px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>PASS, FAIL or SKIPPED?</h1>
+  <span class="count" id="count"></span>
+</header>
+<div class="bank" id="bank">
+  <!-- One button per possible answer. A card's answer must match a button's text exactly. -->
+  <button type="button">PASS</button><button type="button">FAIL</button><button type="button">SKIPPED</button>
+  <span class="legend">factorial is ours: factorial(0) = 1, factorial(4) = 24. toBe = the same thing; toEqual = the same contents.</span>
+</div>
+<div class="stagearea">
+  <div class="card" id="card">
+    <div class="who">npm test runs this · PASS, FAIL or SKIPPED in chat on "go"</div>
+    <div class="q" id="q"></div>
+    <div class="a" id="a"></div>
+  </div>
+</div>
+<footer>
+  <button id="prev">← Back</button><button class="go" id="reveal">Reveal (space)</button><button id="next">Next →</button>
+  <span>← → to move · space to reveal · first 6 cards are the core set · last card is a bonus</span>
+</footer>
+<script>
+  // [request, answer, why]
+  const Q = [
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">factorial.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"4! is 24\", () => {\n  expect(factorial(4)).toBe(24);\n});</pre>",
+        "PASS",
+        "Our factorial returns 24. <code>toBe</code> matches exactly."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">arrays.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"same list?\", () => {\n  expect([1, 2, 3]).toBe([1, 2, 3]);\n});</pre>",
+        "FAIL",
+        "<code>toBe</code> asks \"the SAME array?\". These are two arrays with the same contents. Jest even says: \"serializes to the same string\"."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">arrays.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"same contents?\", () => {\n  expect([1, 2, 3]).toEqual([1, 2, 3]);\n});</pre>",
+        "PASS",
+        "<code>toEqual</code> compares contents, item by item. Use it for arrays and objects."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">math.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">xtest(\"adds\", () => {\n  expect(1 + 1).toBe(3);\n});</pre>",
+        "SKIPPED",
+        "The <code>x</code> skips it, so the wrong 3 never runs. It shows as <code>○ skipped</code>."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">math.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"decimals\", () => {\n  expect(0.1 + 0.2).toBe(0.3);\n});</pre>",
+        "FAIL",
+        "Received: 0.30000000000000004. Same floating-point trap as Python."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">math.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"close enough\", () => {\n  expect(0.1 + 0.2).toBeCloseTo(0.3);\n});</pre>",
+        "PASS",
+        "<code>toBeCloseTo</code> is Jest's <code>math.isclose</code>."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">user.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"same user\", () => {\n  expect({ name: \"Alex\" }).toEqual({ name: \"Alex\" });\n});</pre>",
+        "PASS",
+        "Same keys, same values: <code>toEqual</code> passes."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">factorial.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">xdescribe(\"large\", () => {\n  test(\"10!\", () => {\n    expect(factorial(10)).toBe(3628800);\n  });\n});</pre>",
+        "SKIPPED",
+        "Everything inside an <code>xdescribe</code> is skipped, even a correct test."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">factorial.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"0! is 0?\", () => {\n  expect(factorial(0)).toBe(0);\n});</pre>",
+        "FAIL",
+        "0! is 1, and our factorial returns 1. Here the TEST is wrong, not the code: read Expected vs Received."
+    ],
+    [
+        "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">Bonus: colors.spec.js</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">test(\"has green\", () => {\n  expect([\"red\", \"green\"]).toContain(\"green\");\n});</pre>",
+        "PASS",
+        "<code>toContain</code> checks that a list has an item: Jest's <code>in</code>."
+    ]
+  ]
+  let i = 0
+  const $ = (s) => document.querySelector(s)
+  const btns = [...document.querySelectorAll('#bank button')]
+  function draw() {
+    $('#card').classList.remove('revealed')
+    $('#q').innerHTML = Q[i][0]
+    $('#a').innerHTML = `<b>${Q[i][1]}</b>${Q[i][2]}`
+    $('#count').textContent = `${i + 1} / ${Q.length}`
+    btns.forEach((s) => s.className = '')
+  }
+  function reveal(picked) {
+    $('#card').classList.add('revealed')
+    btns.forEach((s) => s.className = s.textContent === Q[i][1] ? 'hit' : (s.textContent === picked ? 'miss' : ''))
+  }
+  btns.forEach((b) => b.onclick = () => reveal(b.textContent))
+  const go = (n) => { i = Math.min(Math.max(n, 0), Q.length - 1); draw() }
+  $('#prev').onclick = () => go(i - 1); $('#next').onclick = () => go(i + 1); $('#reveal').onclick = () => reveal()
+  addEventListener('keydown', (e) => {
+    if (e.key === ' ') { e.preventDefault(); reveal() }
+    if (e.key === 'ArrowRight') go(i + 1)
+    if (e.key === 'ArrowLeft') go(i - 1)
+  })
+  draw()
+</script>
+</body>
+</html>

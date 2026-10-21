@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 1 · Intro to TDD with pytest</title>
+<link rel="stylesheet" href="../shared/deck.css">
+<link rel="stylesheet" href="../shared/codepad.css">
+<style>
+  .why { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin-top: 10px; }
+  .why .card { padding: 20px 20px; }
+  .why .card h3 { font-size: 26px; }
+  .why .card p { font-size: 22px; margin: 0; }
+  .cmdbox pre { font-size: 23px; padding: 18px 24px; }
+</style>
+</head>
+<body data-minutes="40">
+<div class="stage">
+
+<!-- ============ OPEN (0–9) ============ -->
+<section class="slide title" data-seg="Open" data-at="0">
+  <div class="kicker">Fundamentals · Test Driven Development · Part 1 of 2</div>
+  <h1>Write the test first</h1>
+  <p class="sub">Test Driven Development with pytest: watch a test fail, make it pass, then clean up. All of it typed and run live.</p>
+  <aside class="notes">
+    <p><b>Before class</b> (demo-kit/RUNBOOK.md): this deck open in <b>Chrome</b> with internet (the editor and Python load once). In your own terminal: <code>pip install pytest</code>, <code>pytest --version</code>.</p>
+    <p>Press <b>T</b>. Students open VS Code and a terminal: <code>mkdir tdd-pytest</code>, <code>cd tdd-pytest</code>, <code>code .</code></p>
+    <p><b>The code slides are a real editor.</b> Type live (each slide's notes have <b>TYPE THIS</b>), <b>Ctrl+S</b> saves, then click the terminal and type the command. <b>Backup:</b> <b>N</b> types the next chunk, <b>R</b> runs the command.</p>
+  </aside>
+</section>
+
+<section class="slide statement" data-seg="Open" data-at="1">
+  <h2>How did you know your code worked?</h2>
+  <ul style="margin-top:30px">
+    <li>Last week the spec files printed <code>true</code> / <code>false</code></li>
+    <li>A <code>false</code> told you <b>that</b> something broke, not <b>what</b></li>
+    <li>Today: tests that explain the failure, and that come <b>before</b> the code</li>
+  </ul>
+  <aside class="notes">
+    <p>Ask chat: "When a spec printed false, how did you find the bug?" (print statements, guessing).</p>
+    <p>"A real test framework tells you the line, the value it got, and the value it wanted."</p>
+  </aside>
+</section>
+
+<section class="slide diagram" data-seg="What is TDD?" data-at="3">
+  <img src="../diagrams/TD1-01-red-green-refactor.png" alt="Red, Green, Refactor: the test comes first. Red: write a test for code that doesn't exist yet; pytest fails. Green: write the minimum code to make it pass; pytest passes. Refactor: clean the code up; pytest still passes. Then the next feature starts at red again. Example: test_example.py asserts add_two_numbers(2, 2) == 4, which is red with an ImportError because there is no function yet; example.py defines add_two_numbers, which is green with 1 passed. If you never saw it fail, you don't know the test can catch a bug.">
+  <div class="src">diagrams/TD1-01-red-green-refactor.tldr</div>
+  <aside class="notes">
+    <ul>
+      <li><b>Red:</b> a failing test proves the code is incomplete.</li>
+      <li><b>Green:</b> the <b>minimum</b> code to pass. Not the perfect code.</li>
+      <li><b>Refactor:</b> improve structure while the test keeps you safe.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-seg="What is TDD?" data-at="5">
+  <h2>Why write tests first?</h2>
+  <div class="why">
+    <div class="card blue"><h3>Reliability</h3><p>The code does what the test says, so fewer bugs ship.</p></div>
+    <div class="card green"><h3>Documentation</h3><p>A test shows exactly how the code should be used.</p></div>
+    <div class="card blue"><h3>Maintainability</h3><p>Refactor without fear: the tests catch what you break.</p></div>
+    <div class="card green"><h3>Collaboration</h3><p>Many people change one codebase with confidence.</p></div>
+    <div class="card red"><h3>Regression</h3><p>An old bug that comes back fails a test right away.</p></div>
+  </div>
+  <p class="bottomline" style="margin-top:40px">The test is the requirement, written as code.</p>
+  <aside class="notes">
+    <p>Read one line per card. Ask: "Which of these would have saved you time last week?"</p>
+  </aside>
+</section>
+
+<section class="slide" data-seg="Your terminal: pytest" data-at="7">
+  <h2>Meet pytest</h2>
+  <div class="cols cmdbox" style="gap:40px">
+    <div>
+      <p class="small" style="margin-bottom:10px"><b>1 · Install it</b> (in your own terminal)</p>
+      <pre>pip install pytest
+pytest --version</pre>
+      <p class="small muted" style="margin-top:12px">If <code>pip</code> fails, use <code>pip3</code>.</p>
+    </div>
+    <div>
+      <p class="small" style="margin-bottom:10px"><b>2 · A folder for today</b></p>
+      <pre>mkdir tdd-pytest
+cd tdd-pytest
+code .</pre>
+    </div>
+  </div>
+  <ul class="small" style="margin-top:28px">
+    <li>Test functions are plain Python functions. Checks are plain <code>assert</code>.</li>
+    <li>pytest <b>finds</b> tests by their names, and has plugins for reports, coverage and CI.</li>
+  </ul>
+  <aside class="notes">
+    <p><b>** YOUR TERMINAL, about 2 minutes. **</b> Thumbs up when <code>pytest --version</code> prints <code>pytest 8.x</code>.</p>
+    <p><b>Mac "command not found: pip":</b> <code>pip3 install pytest</code>, or <code>python3 -m pip install pytest</code>. Then <code>python3 -m pytest</code> works even if <code>pytest</code> isn't on the PATH.</p>
+  </aside>
+</section>
+
+<section class="slide diagram" data-seg="What is TDD?" data-at="9">
+  <img src="../diagrams/TD1-02-pytest-finds.png" alt="How pytest finds your tests. Files: test_example.py is found, example_test.py is found, example.py is not a test file, mytests.py is not found. Functions inside a test file: test_add and test_divide are found; check_add and add_test are not. Inside, a plain assert with something that is True or False, such as assert add_two_numbers(2, 2) == 4. pytest alone runs every test file in the folder; pytest test_example.py runs one file.">
+  <div class="src">diagrams/TD1-02-pytest-finds.tldr</div>
+  <aside class="notes">
+    <p>"Get the name wrong and pytest doesn't complain: the test just isn't there." That's the curriculum's <b>test discovery</b> error.</p>
+    <p>Files: <code>test_&lt;name&gt;.py</code> (pytest also accepts <code>&lt;name&gt;_test.py</code>). Functions: <code>test_&lt;name&gt;</code>.</p>
+  </aside>
+</section>
+
+<!-- ============ RED GREEN REFACTOR (10–18) ============ -->
+<section class="slide pad" data-seg="Code along: red, green, refactor" data-at="10">
+  <h2>Red first, then green <span class="say">test_example.py · example.py</span></h2>
+  <div class="vscode" data-folder="tdd-pytest" data-terminal="one" data-term-lines="17" data-run="pytest test_example.py">
+<script type="text/plain" data-file="test_example.py" data-step>from example import add_two_numbers
+
+def test_add_two_numbers():
+    assert add_two_numbers(2, 2) == 4</script>
+<script type="text/plain" data-file="example.py" data-step>def add_two_numbers(num_one, num_two):
+    answer = num_one + num_two
+    return answer</script>
+<script type="text/plain" data-file="example.py" data-step data-mode="set">def add_two_numbers(num_one, num_two):
+    return num_one + num_two</script>
+  </div>
+  <aside class="notes">
+    <p><b>** CODE ALONG, about 7 minutes. **</b> Students: <code>test_example.py</code> and an <b>empty</b> <code>example.py</code>.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf"><b>test_example.py</b> · part 1</p>
+    <pre>from example import add_two_numbers
+
+def test_add_two_numbers():
+    assert add_two_numbers(2, 2) == 4</pre>
+    <p class="tf"><b>example.py</b> · part 1</p>
+    <pre>def add_two_numbers(num_one, num_two):
+    answer = num_one + num_two
+    return answer</pre>
+    <p class="tf">Save + run <code>python3 example.py</code> first. Then in <b>example.py</b> change line 2 to:</p>
+    <pre>    return num_one + num_two</pre>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>pytest test_example.py</pre>
+    </div>
+    <ul>
+      <li><b>RED:</b> type the test, save, run <code>pytest test_example.py</code>. <code>ImportError: cannot import name 'add_two_numbers'</code>: there's no function yet. That's the point.</li>
+      <li>Type <code>echo $?</code> → <b>2</b> (error during collection).</li>
+      <li><b>GREEN:</b> type the function in <code>example.py</code>, save, run again → <code>1 passed</code>, a green dot. <code>echo $?</code> → <b>0</b>.</li>
+      <li><b>REFACTOR:</b> drop the extra variable (step 3 lights up), save, run → still <code>1 passed</code>.</li>
+      <li><b>Break it on purpose:</b> change <code>+</code> to <code>-</code>, save, run: <code>assert 0 == 4</code> and <code>where 0 = add_two_numbers(2, 2)</code>. pytest shows the values. Undo.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide diagram" data-seg="Reading the output" data-at="17">
+  <img src="../diagrams/TD1-03-reading-pytest.png" alt="Reading pytest: one character per test, then the story. Example output: collected 4 items; test_example.py one dot at 25 percent; test_assertions.py dot dot F at 100 percent; a FAILURES section for test_shopping_list with the failing line marked by a greater-than sign and E lines showing the AssertionError and that the right side contains one more item, jam; and the summary 1 failed, 3 passed. Key: a dot is passed, F is failed because the assert was False, E is an error that crashed before testing. Exit code with echo $?: 0 all passed, 1 some failed, 2 error or interrupted, 5 no tests found. Computers read the exit code: a CI pipeline blocks your merge when it isn't 0.">
+  <div class="src">diagrams/TD1-03-reading-pytest.tldr</div>
+  <aside class="notes">
+    <p>The three errors from the lesson:</p>
+    <ul>
+      <li><b>AssertionError</b>: the check was False (an <b>F</b>).</li>
+      <li><b>Test discovery</b>: "no tests ran", exit code 5 (wrong file or function name).</li>
+      <li><b>ImportError</b>: a typo in a name, or the file isn't where Python looks (an <b>E</b> / exit 2).</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ============ ACTIVITY (18–24) ============ -->
+<section class="slide activity" data-seg="Activity: Pass, fail, or not found?" data-at="18">
+  <h2>Activity: Pass, fail, or not found?</h2>
+  <div class="countdown" data-sec="360"></div>
+  <ol class="steps">
+    <li>A test file and a test appear</li>
+    <li>In chat on "go": <b>PASS</b>, <b>FAIL</b> or <b>NOT FOUND</b></li>
+    <li>NOT FOUND = pytest never runs it</li>
+  </ol>
+  <p class="muted small" style="margin-top:24px">Page: activity-pass-fail-not-found/</p>
+  <aside class="notes">
+    <p>About 30 seconds a card; the first 6 are the core set. Space reveals. Every answer was run in real pytest.</p>
+  </aside>
+</section>
+
+<!-- ============ ASSERTIONS (24–30) ============ -->
+<section class="slide pad" data-seg="Code along: assertions" data-at="24">
+  <h2>Assertions: anything True or False <span class="say">test_assertions.py · test_shopping.py</span></h2>
+  <div class="vscode" data-folder="tdd-pytest" data-terminal="one" data-term-lines="12" data-run="pytest -v test_assertions.py test_shopping.py">
+<script type="text/plain" data-file="test_assertions.py" data-step>import math
+
+def test_comparisons():
+    assert 2 + 2 == 4
+    assert 3 * 5 != 11
+    assert 10 > 5
+    assert math.isclose(0.1 + 0.2, 0.3)</script>
+<script type="text/plain" data-file="test_assertions.py" data-step>def test_membership_and_strings():
+    assert "apple" in ["apple", "banana", "cherry"]
+    assert "grape" not in ["apple", "banana", "cherry"]
+    assert "Hello, world!".startswith("Hello")</script>
+<script type="text/plain" data-file="test_shopping.py" data-step>import pytest
+
+def test_divide_by_zero():
+    with pytest.raises(ZeroDivisionError):
+        1 / 0</script>
+<script type="text/plain" data-file="test_shopping.py" data-step>def test_shopping_list():
+    cart = ["milk", "eggs"]
+    assert sorted(cart) == ["eggs", "milk", "jam"]</script>
+  </div>
+  <aside class="notes">
+    <p><b>** CODE ALONG, about 6 minutes. **</b> Students: <code>test_assertions.py</code> and <code>test_shopping.py</code>. Run with <code>-v</code>: one line per test with its name. Two files in one command: pytest runs both.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf"><b>test_assertions.py</b> · part 1</p>
+    <pre>import math
+
+def test_comparisons():
+    assert 2 + 2 == 4
+    assert 3 * 5 != 11
+    assert 10 &gt; 5
+    assert math.isclose(0.1 + 0.2, 0.3)</pre>
+    <p class="tf"><b>test_assertions.py</b> · part 2 (add below, after a blank line)</p>
+    <pre>def test_membership_and_strings():
+    assert &quot;apple&quot; in [&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;]
+    assert &quot;grape&quot; not in [&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;]
+    assert &quot;Hello, world!&quot;.startswith(&quot;Hello&quot;)</pre>
+    <p class="tf"><b>test_shopping.py</b> · part 1</p>
+    <pre>import pytest
+
+def test_divide_by_zero():
+    with pytest.raises(ZeroDivisionError):
+        1 / 0</pre>
+    <p class="tf"><b>test_shopping.py</b> · part 2 (add below, after a blank line)</p>
+    <pre>def test_shopping_list():
+    cart = [&quot;milk&quot;, &quot;eggs&quot;]
+    assert sorted(cart) == [&quot;eggs&quot;, &quot;milk&quot;, &quot;jam&quot;]</pre>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>pytest -v test_assertions.py test_shopping.py</pre>
+    </div>
+    <ul>
+      <li><code>math.isclose</code>: <code>0.1 + 0.2 == 0.3</code> is <b>False</b> in Python (floating point). Ask chat first.</li>
+      <li><code>pytest.raises</code> checks that an error <b>does</b> happen. (The lesson's <code>assertRaises</code> / <code>assertEqual</code> are the <code>unittest</code> spellings; in pytest it's <code>pytest.raises</code> and plain <code>==</code>.)</li>
+      <li><b>The last step fails on purpose.</b> Read it together: <code>Right contains one more item: 'jam'</code>. Then remove <code>"jam"</code>, save, run → all green.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ============ MONKEYPATCH / CAPSYS (30–35) ============ -->
+<section class="slide pad" data-seg="Code along: monkeypatch, capsys" data-at="30">
+  <h2>Fake the keyboard, catch the screen <span class="say">test_input.py · test_print.py</span></h2>
+  <div class="vscode" data-folder="tdd-pytest" data-terminal="one" data-term-lines="10" data-run="pytest -v test_input.py test_print.py">
+<script type="text/plain" data-file="test_input.py" data-step>def get_user_input():
+    user_input = input("Enter a number: ")
+    return int(user_input)
+
+def test_get_user_input(monkeypatch):
+    # Simulate user input
+    monkeypatch.setattr("builtins.input", lambda _: "42")
+    result = get_user_input()
+    assert result == 42</script>
+<script type="text/plain" data-file="test_print.py" data-step>def test_printing(capsys):
+    print("Hello, pytest!")
+    captured = capsys.readouterr()
+    assert captured.out == "Hello, pytest!\n"</script>
+<script type="text/plain" data-file="test_input.py" data-step>def get_multiple_inputs():
+    num1 = int(input("Enter the first number: "))
+    num2 = int(input("Enter the second number: "))
+    return num1 + num2
+
+def test_get_multiple_inputs(monkeypatch):
+    user_inputs = ["5", "7"]
+    input_values = iter(user_inputs)
+    monkeypatch.setattr("builtins.input", lambda _: next(input_values))
+    assert get_multiple_inputs() == 5 + 7</script>
+  </div>
+  <aside class="notes">
+    <p><b>** CODE ALONG, about 5 minutes. **</b> Students: <code>test_input.py</code>, <code>test_print.py</code>.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf"><b>test_input.py</b> · part 1</p>
+    <pre>def get_user_input():
+    user_input = input(&quot;Enter a number: &quot;)
+    return int(user_input)
+
+def test_get_user_input(monkeypatch):
+    # Simulate user input
+    monkeypatch.setattr(&quot;builtins.input&quot;, lambda _: &quot;42&quot;)
+    result = get_user_input()
+    assert result == 42</pre>
+    <p class="tf"><b>test_print.py</b> · part 1</p>
+    <pre>def test_printing(capsys):
+    print(&quot;Hello, pytest!&quot;)
+    captured = capsys.readouterr()
+    assert captured.out == &quot;Hello, pytest!\n&quot;</pre>
+    <p class="tf"><b>test_input.py</b> · part 2 (add below, after a blank line)</p>
+    <pre>def get_multiple_inputs():
+    num1 = int(input(&quot;Enter the first number: &quot;))
+    num2 = int(input(&quot;Enter the second number: &quot;))
+    return num1 + num2
+
+def test_get_multiple_inputs(monkeypatch):
+    user_inputs = [&quot;5&quot;, &quot;7&quot;]
+    input_values = iter(user_inputs)
+    monkeypatch.setattr(&quot;builtins.input&quot;, lambda _: next(input_values))
+    assert get_multiple_inputs() == 5 + 7</pre>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>pytest -v test_input.py test_print.py</pre>
+    </div>
+    <ul>
+      <li><b>monkeypatch</b> swaps <code>input()</code> for a function that returns "42", so the test never waits for a keyboard.</li>
+      <li><b>capsys</b> captures what was printed. Note the <code>\n</code>: <code>print</code> adds a newline.</li>
+      <li>Step 3: several inputs. <code>iter</code> + <code>next</code> hand them out one at a time.</li>
+      <li>You get <code>monkeypatch</code> and <code>capsys</code> by <b>naming</b> them as parameters. pytest fills them in.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ============ DOCKER + WRAP (35–40) ============ -->
+<section class="slide" data-seg="Tests in a container" data-at="35">
+  <h2>The same tests, in a container</h2>
+  <div class="cols" style="grid-template-columns: 1fr 1.15fr; gap:36px">
+    <div><p class="small" style="margin-bottom:8px"><b>Dockerfile</b> (in <code>tdd-pytest/</code>)</p>
+      <pre style="font-size:23px">FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install --no-cache-dir pytest
+
+CMD ["pytest"]</pre></div>
+    <div>
+      <ul class="small">
+        <li><b>RUN</b> runs while <b>building</b> the image (install things). You can have many.</li>
+        <li><b>CMD</b> runs when the <b>container starts</b>. Here: the test suite, once.</li>
+      </ul>
+      <pre style="font-size:20px; margin-top:16px; padding:16px 22px">docker build -t pytest-tests .
+docker run --rm pytest-tests
+echo $?</pre>
+    </div>
+  </div>
+  <p class="bottomline">Same Python, same pytest, on every laptop and in CI. Exit code 0 = green.</p>
+  <aside class="notes">
+    <p><b>** YOUR DEMO, about 3 minutes. ** Students watch</b> (it's in Code Lab 1).</p>
+    <ul>
+      <li>The Dockerfile is the curriculum's, word for word.</li>
+      <li>Run it once with the "jam" test still failing: <code>1 failed</code>, <code>echo $?</code> → <b>1</b>. Fix it, <b>rebuild</b>, run → <b>0</b>. ("COPY happens at build time": same lesson as the Docker lecture.)</li>
+      <li>"This is exactly what a CI server does on every push. Lecture 2 shows the picture."</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide" data-seg="Wrap up" data-at="38">
+  <h2>Homework, Part I</h2>
+  <p class="small" style="margin-bottom:10px">Top to bottom: each one is a little harder.</p>
+  <ol class="small" style="padding-left:1.2em">
+    <li><b>Roman Numerals</b> (Python): <code>pytest test_roman_numerals.py</code>, then add your own tests</li>
+    <li><b>Linear Search</b> (Python): <code>pytest test_linear_search.py</code>, then add tests for <code>linear_search_global</code></li>
+  </ol>
+  <div class="card green" style="margin-top:24px">
+    <h3>Work the TDD way</h3>
+    <p class="small">Run the tests first and watch them fail. Make one pass at a time. Then add a test for an edge case before you handle it.</p>
+  </div>
+  <aside class="notes">
+    <p>Full steps on the class site (Homework Part I): fork → clone → <code>pip install pytest</code> → <code>pytest</code>.</p>
+  </aside>
+</section>
+
+</div>
+<script src="../shared/deck.js"></script>
+<script src="../shared/codepad.js"></script>
+</body>
+</html>
