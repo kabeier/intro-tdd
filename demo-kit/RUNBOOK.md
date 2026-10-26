@@ -13,6 +13,7 @@ It's **Monaco, the editor inside VS Code**, plus a terminal you type into. Work 
 | Type code | Click in the editor. Autocomplete, hovers, Ctrl+/ comments, Ctrl+Z, multi-cursor all work |
 | Save | **Ctrl+S**. ● on the tab = unsaved. **The terminal runs the saved file**, like real VS Code (show this once: it's the #1 student bug) |
 | Run | Click the terminal, type the command: `pytest test_example.py`, `pytest -v …`, `npm test`, `node runner.js`. Or **Ctrl+Enter** in the editor (saves + runs that file's command) |
+| Read another file | Click it in the **Explorer** (e.g. `example.py` from the last slide, `package.json`): it opens **read-only**. × or **Esc** closes it |
 | Stop a program | Click the terminal, **Ctrl+C** (auto-stops after 20 s if you forget) |
 | Terminal extras | ↑ ↓ history · Tab completes file names · `echo $?` (exit code) · `ls`, `cat file`, `clear` · `npm init -y` writes package.json · `npm install` / `pip install` print a note (nothing to download here) · `docker` → run it in your own terminal |
 | Leave the editor | **Esc**, so → / ← change slides again (keys typed in the terminal never change slides) |

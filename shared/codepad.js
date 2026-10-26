@@ -1034,7 +1034,8 @@
         </div>
         <div class="vs-exp"><div class="h">EXPLORER</div><div class="folder">⌄ ${esc(folder.toUpperCase())}</div>
           ${explorerFiles.map((f) => `<div class="f${names.includes(f) ? ' cur' : ''}" data-f="${esc(f)}">${fileIcon(f)}${esc(f)}</div>`).join('')}</div>
-        <div class="vs-groups">${names.map((n) => `
+        <div class="vs-groups"><div class="vs-peek" hidden><div class="vs-tabs"><div class="vs-tab"><span class="pk-icon"></span><span class="pk-name"></span><span class="pk-ro">read-only</span><button type="button" class="pk-x" title="Close (Esc)">×</button></div></div>
+            <div class="vs-crumb"></div><pre class="pk-code"></pre></div>${names.map((n) => `
           <div class="vs-group" data-f="${esc(n)}">
             <div class="vs-tabs"><div class="vs-tab">${fileIcon(n)}${esc(n)}<span class="x" title="● = not saved yet (Ctrl+S)">×</span></div>
               <button type="button" class="vs-run" title="Save and run this file in its terminal (Ctrl+Enter)"><svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z"/></svg>Run</button></div>
@@ -1065,6 +1066,37 @@
       ed[n] = { name: n, lang: langOf(n), g, host: g.querySelector('.vs-code'), tab: g.querySelector('.vs-tab .x'), editor: null,
                 shell: shared || makeShell(root.querySelector(`.vs-term[data-f="${CSS.escape(n)}"]`), pad) }
     })
+
+    // Click a file in the explorer: files with a pane get focus; the rest (Dockerfiles, earlier slides' files) open read-only
+    const peek = root.querySelector('.vs-peek')
+    const peekHtml = (f, t) => {
+      if (/\.(js|py)$/.test(f)) return highlight(t, langOf(f))
+      if (/^Dockerfile/.test(f)) return t.split('\n').map((l) => {
+        if (/^\s*#/.test(l)) return `<span class="t-com">${esc(l)}</span>`
+        const m = l.match(/^(\s*)([A-Z]+)\b(.*)$/)
+        const rest = esc(m ? m[3] : l).replace(/"([^"]*)"/g, '<span class="t-str">"$1"</span>')
+        return m ? `${m[1]}<span class="t-kw">${m[2]}</span>${rest}` : rest
+      }).join('\n')
+      return esc(t)
+    }
+    const closePeek = () => { peek.hidden = true; root.querySelectorAll('.vs-exp .f.peeked').forEach((x) => x.classList.remove('peeked')) }
+    function openPeek(f) {
+      const t = pad.fsRead(f)
+      if (t === undefined) return
+      peek.querySelector('.pk-icon').outerHTML = '<span class="pk-icon">' + fileIcon(f) + '</span>'
+      peek.querySelector('.pk-name').textContent = f
+      peek.querySelector('.vs-crumb').textContent = `${folder} › ${f}`
+      peek.querySelector('.pk-code').innerHTML = t ? peekHtml(f, t.replace(/\n$/, '')) : '<span class="t-com">(empty file)</span>'
+      closePeek(); peek.hidden = false
+      root.querySelector(`.vs-exp .f[data-f="${CSS.escape(f)}"]`)?.classList.add('peeked')
+    }
+    root.querySelector('.vs-exp').addEventListener('click', (ev) => {
+      const el = ev.target.closest('.f'); if (!el) return
+      const f = el.dataset.f
+      if (names.includes(f)) { closePeek(); build().then(() => ed[f].editor?.focus?.()); return }
+      if (!peek.hidden && el.classList.contains('peeked')) closePeek(); else openPeek(f)
+    })
+    peek.querySelector('.pk-x').addEventListener('click', closePeek)
 
     const valueOf = (n) => (ed[n] && ed[n].editor ? ed[n].editor.value : saved[n] !== undefined ? saved[n] : start[n])
     const markDirty = () => names.forEach((n) => { const d = valueOf(n) !== saved[n]; ed[n].tab.textContent = d ? '●' : '×'; ed[n].tab.classList.toggle('dirty', d) })
@@ -1216,6 +1248,7 @@
 
     Object.assign(pad, {
       saveFocused: () => { if (focused) save(focused.name) },
+      closePeek, peekOpen: () => !peek.hidden,
       save: (n) => save(n),
       async stepInstant() { await build(); finishTyping(); const st = steps[stepIdx]; if (!st) return false; stepIdx++; ed[st.file].editor.value = applyStep(ed[st.file].editor.value, st); save(st.file); drawStatus(); return true },
       shells: () => [...new Set(names.map((n) => ed[n].shell))],
@@ -1262,14 +1295,15 @@
     if ((k.ctrlKey || k.metaKey) && k.key.toLowerCase() === 's') { k.preventDefault(); p.saveFocused(); return }  // VS Code's save, not the browser's
     if (k.target.closest && k.target.closest('input, textarea, select, .vs-term')) return
     if (k.ctrlKey || k.metaKey || k.altKey) return
-    if (k.key === 'n' || k.key === 'N') { k.preventDefault(); p.next() }
-    else if (k.key === 'r' || k.key === 'R') { k.preventDefault(); p.runAll() }
+    if (k.key === 'Escape' && p.peekOpen()) { k.preventDefault(); k.stopPropagation(); p.closePeek() }
+    else if (k.key === 'n' || k.key === 'N') { k.preventDefault(); p.closePeek(); p.next() }
+    else if (k.key === 'r' || k.key === 'R') { k.preventDefault(); p.closePeek(); p.runAll() }
   }, true)
   const sendState = () => { const p = activePad(); if (p) { p.fit(); p.build(); p.broadcast() } else chan.postMessage({ t: 'state', has: false }) }
   new MutationObserver(sendState).observe(document.querySelector('.stage') || document.body, { attributes: true, subtree: true, attributeFilter: ['class'] })
   chan.onmessage = ({ data: d }) => {
     if (d.t === 'hello') sendState()
-    if (d.t === 'cmd') { const p = activePad(); if (!p) return; ({ next: p.next, run: p.runAll, all: p.showAll, reset: p.reset })[d.c]?.() }
+    if (d.t === 'cmd') { const p = activePad(); if (!p) return; p.closePeek(); ({ next: p.next, run: p.runAll, all: p.showAll, reset: p.reset })[d.c]?.() }
   }
   if (pads.some((p) => p.names.some((n) => langOf(n) === 'py'))) startPython()
   if (pads.length) loadMonaco()
