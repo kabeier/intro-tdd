@@ -138,7 +138,7 @@ def test_add_two_numbers():
     </div>
     <ul>
       <li><b>RED:</b> type the test, save, run <code>pytest test_example.py</code>. <code>ImportError: cannot import name 'add_two_numbers'</code>: there's no function yet. That's the point.</li>
-      <li>Type <code>echo $?</code> → <b>2</b> (error during collection).</li>
+      <li>Type <code>echo $?</code> → <b>2</b>. Say: "<code>echo $?</code> prints the <b>exit code</b> of the last command. <b>0</b> = all good, anything else = a problem. <b>2</b> = pytest couldn't even load the test." Why: computers don't read the output, they read this number (Thursday's GitHub Actions turns red when it isn't 0). Full table on the next slide.</li>
       <li><b>GREEN:</b> type the function in <code>example.py</code>, save, run again → <code>1 passed</code>, a green dot. <code>echo $?</code> → <b>0</b>.</li>
       <li><b>REFACTOR:</b> drop the extra variable (step 3 lights up), save, run → still <code>1 passed</code>.</li>
       <li><b>Break it on purpose:</b> change <code>+</code> to <code>-</code>, save, run: <code>assert 0 == 4</code> and <code>where 0 = add_two_numbers(2, 2)</code>. pytest shows the values. Undo.</li>
