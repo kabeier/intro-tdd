@@ -198,7 +198,14 @@ test(&quot;tests factorial(4) = 24&quot;, () =&gt; {
       <li>Type the test, save, <code>npm test</code> → <b>PASS</b>, ✓, <code>Tests: 1 passed</code>.</li>
       <li>"Better than the homework spec's true/false, right?"</li>
       <li>Change <code>24</code> to <code>23</code> (step 2), save, run → <b>FAIL</b>. Read it out: <b>Expected: 23, Received: 24</b>, the line with <code>&gt;</code>, the <code>^</code> under the matcher.</li>
-      <li><code>echo $?</code> → <b>1</b>. Change it back (step 3), run → PASS, <code>echo $?</code> → <b>0</b>.</li>
+      <li><code>echo $?</code> → <b>1</b>. Say: "Same idea as pytest: <b>0</b> = all good. Anything else = a problem." Change it back (step 3), run → PASS, <code>echo $?</code> → <b>0</b>.
+        <table style="border-collapse:collapse;margin:10px 0 6px">
+          <tr><th style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap" align="left">exit code</th><th style="padding:4px 16px;border-bottom:1px solid #34405a" align="left">Jest (<code>npm test</code>) means</th><th style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap" align="left">CI</th></tr>
+          <tr><td style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap"><b>0</b></td><td style="padding:4px 16px;border-bottom:1px solid #34405a">all tests passed</td><td style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap">🟢 green</td></tr>
+          <tr><td style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap"><b>1</b></td><td style="padding:4px 16px;border-bottom:1px solid #34405a">some tests failed (also: no tests found, or a test file that crashes)</td><td style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap">🔴 red</td></tr>
+          <tr><td style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap"><b>127</b></td><td style="padding:4px 16px;border-bottom:1px solid #34405a"><code>jest: command not found</code>: Jest isn't installed (<code>npm install --save-dev jest</code>)</td><td style="padding:4px 16px;border-bottom:1px solid #34405a;white-space:nowrap">🔴 red</td></tr>
+        </table>
+      </li>
     </ul>
   </aside>
 </section>
