@@ -225,24 +225,8 @@ test(&quot;tests factorial(4) = 24&quot;, () =&gt; {
   </aside>
 </section>
 
-<!-- ============ ACTIVITY (20–26) ============ -->
-<section class="slide activity" data-seg="Activity: PASS, FAIL or SKIPPED?" data-at="20">
-  <h2>Activity: PASS, FAIL or SKIPPED?</h2>
-  <div class="countdown" data-sec="360"></div>
-  <ol class="steps">
-    <li>A Jest test appears (<code>factorial</code> is the one we wrote)</li>
-    <li>In chat on "go": <b>PASS</b>, <b>FAIL</b> or <b>SKIPPED</b></li>
-    <li>Watch <code>toBe</code> vs <code>toEqual</code></li>
-  </ol>
-  <p class="muted small" style="margin-top:24px">Page: activity-pass-fail-skipped/</p>
-  <aside class="notes">
-    <p>About 30 seconds a card; the first 6 are the core set. Every answer was run in real Jest 30.</p>
-    <p>Key idea: <code>toBe</code> = the <b>same</b> thing (Object.is). Two arrays with the same contents are different arrays → use <code>toEqual</code>.</p>
-  </aside>
-</section>
-
-<!-- ============ DESCRIBE + SKIP (26–32) ============ -->
-<section class="slide pad" data-seg="Code along: describe, skip" data-at="26">
+<!-- ============ DESCRIBE + SKIP (20–26) ============ -->
+<section class="slide pad" data-seg="Code along: describe, skip" data-at="20">
   <h2>Group with describe, skip with x <span class="say">factorial.spec.js</span></h2>
   <div class="vscode" data-folder="tdd-jest" data-terminal="one" data-term-lines="11" data-run="npm test">
 <script type="text/plain" data-file="factorial.spec.js" data-start>const factorial = require("./factorial.js");
@@ -309,6 +293,22 @@ describe(&quot;tests factorial for large numbers&quot;, () =&gt; {
       <li>Step 3: <code>describe</code> → <code>xdescribe</code> skips a whole group. Run → <code>3 skipped, 1 passed</code>.</li>
       <li>"Skip what's noisy while you work on one thing. Don't commit skipped tests by accident."</li>
     </ul>
+  </aside>
+</section>
+
+<!-- ============ ACTIVITY (26–32) ============ -->
+<section class="slide activity" data-seg="Activity: PASS, FAIL or SKIPPED?" data-at="26">
+  <h2>Activity: PASS, FAIL or SKIPPED?</h2>
+  <div class="countdown" data-sec="360"></div>
+  <ol class="steps">
+    <li>A Jest test appears (<code>factorial</code> is the one we wrote)</li>
+    <li>In chat on "go": <b>PASS</b>, <b>FAIL</b> or <b>SKIPPED</b></li>
+    <li>Watch <code>toBe</code> vs <code>toEqual</code></li>
+  </ol>
+  <p class="muted small" style="margin-top:24px">Page: activity-pass-fail-skipped/</p>
+  <aside class="notes">
+    <p>About 30 seconds a card; the first 6 are the core set. Every answer was run in real Jest 30.</p>
+    <p>Key idea: <code>toBe</code> = the <b>same</b> thing (Object.is). Two arrays with the same contents are different arrays → use <code>toEqual</code>.</p>
   </aside>
 </section>
 

@@ -78,13 +78,13 @@ docker pull python:3.11-slim && docker pull node:18-alpine   # for the two Docke
 | 6 (13) | Deck | pytest vs Jest table | "test() takes a description and a callback." |
 | 7 (14) | Codepad | Type the spec, `npm test` → PASS. 24→23 → FAIL, `echo $?` → 1. Back → PASS | "Expected is what you wrote, Received is what the code did." |
 | 8 (19) | Deck | Reading Jest | "Read Expected and Received first." |
-| 9 (20) | Activity page | 6 cards | "toBe or toEqual: same thing, or same contents?" |
-| 10 (26) | Codepad | Paste the grouped spec (or N), run; xtest; xdescribe | "Skip to focus. Don't commit skips by accident." |
+| 9 (20) | Codepad | Paste the grouped spec (or N), run; xtest; xdescribe | "Skip to focus. Don't commit skips by accident." |
+| 10 (26) | Activity page | 6 cards | "toBe or toEqual: same thing, or same contents?" |
 | 11 (32) | Your terminal | From a copy of demo-kit/tdd-jest/ (has .dockerignore): build, run, `echo $?` | "This is exactly what CI does." |
 | 12 (35) | Deck | CI pipeline | "The exit code is the gate." |
 | 13 (37) | Live docs | Using Matchers → Expect (all); then the pytest capsys / monkeypatch tabs for the Calculator. Click outside the docs to use the arrows again | "Nobody memorizes this. Search one word, find the example, copy the pattern." |
 | 14 (38) | Deck | Homework | "`npm install` first in the Jest repos." |
 
 **Time check, Lecture 2:**
-- **Not at the activity (slide 9) by ~min 22:** on slide 5, press **N** for the script edit and skip the "No tests found" run.
+- **Not at the describe slide (slide 9) by ~min 22:** on slide 5, press **N** for the script edit and skip the "No tests found" run.
 - **Not at slide 11 by ~min 34:** show the Dockerfile and say what it does; students try it from Code Lab 2.
