@@ -160,6 +160,7 @@ def test_add_two_numbers():
   <img src="../diagrams/TD1-03-reading-pytest.png" alt="Reading pytest: one character per test, then the story. Example output: collected 4 items; test_example.py one dot at 25 percent; test_assertions.py dot dot F at 100 percent; a FAILURES section for test_shopping_list with the failing line marked by a greater-than sign and E lines showing the AssertionError and that the right side contains one more item, jam; and the summary 1 failed, 3 passed. Key: a dot is passed, F is failed because the assert was False, E is an error that crashed before testing. Exit code with echo $?: 0 all passed, 1 some failed, 2 error or interrupted, 5 no tests found. Computers read the exit code: a CI pipeline blocks your merge when it isn't 0.">
   <div class="src">diagrams/TD1-03-reading-pytest.tldr</div>
   <aside class="notes">
+    <p><b>The [25%] / [100%]</b> = how far through <b>all</b> the tests pytest is, not how many passed. <code>collected 4 items</code>: test_example.py has 1 test → 1 of 4 = <b>25%</b>. test_assertions.py adds 3 more → 4 of 4 = <b>100%</b>, even with the F.</p>
     <p>The three errors from the lesson:</p>
     <ul>
       <li><b>AssertionError</b>: the check was False (an <b>F</b>).</li>
