@@ -4,13 +4,13 @@ Lecture site for Code Platoon Phase I, **Fundamentals: Test Driven Development**
 
 **Live site:** https://kabeier.github.io/intro-tdd/
 
-## Lecture 1: Intro to TDD with pytest (~40 min, 14 slides)
+## Lecture 1: Intro to TDD with pytest (~40 min, 15 slides)
 
 - **Slides:** `lecture-1-intro-to-tdd-w-pytest/slides.html`
 - **Code lab:** `lecture-1-intro-to-tdd-w-pytest/code-lab/`
 - **Activity:** `lecture-1-intro-to-tdd-w-pytest/activity-pass-fail-not-found/`
 
-## Lecture 2: TDD with Jest (~40 min, 13 slides)
+## Lecture 2: TDD with Jest (~40 min, 14 slides)
 
 - **Slides:** `lecture-2-tdd-w-jest/slides.html`
 - **Code lab:** `lecture-2-tdd-w-jest/code-lab/`

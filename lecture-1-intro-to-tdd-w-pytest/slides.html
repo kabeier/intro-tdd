@@ -12,6 +12,13 @@
   .why .card h3 { font-size: 26px; }
   .why .card p { font-size: 22px; margin: 0; }
   .cmdbox pre { font-size: 23px; padding: 18px 24px; }
+  .docs { display: flex; flex-direction: column; gap: 10px; }
+  .docs-tabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .docs-tabs button { font: 600 19px/1 Inter, system-ui, sans-serif; padding: 9px 14px; border-radius: 8px; border: 2px solid #1b2230; background: #fff; color: #1b2230; cursor: pointer; }
+  .docs-tabs button.on { background: #1b2230; color: #fff; }
+  .docs-tabs a { margin-left: auto; font: 600 18px Inter, system-ui, sans-serif; color: #2552c9; }
+  .docs iframe { width: 100%; height: 560px; border: 2px solid #1b2230; border-radius: 10px; background: #fff; }
+  .docs .url { font: 500 17px 'JetBrains Mono', monospace; color: #5b6577; }
 </style>
 </head>
 <body data-minutes="40">
@@ -405,6 +412,31 @@ echo $?</pre>
 </section>
 
 <section class="slide" data-seg="Wrap up" data-at="38">
+  <h2>The docs have the rest</h2>
+  <div class="cols" style="grid-template-columns: 0.75fr 1.5fr; gap:32px">
+    <div>
+      <ul class="small">
+        <li>Today was the <b>basics</b>. The docs show <b>every</b> feature</li>
+        <li><b>How-to guides</b>: one page per task (left menu, or <b>☰</b>)</li>
+        <li><b>Search</b> (in the menu): one word, like <code>raises</code> or <code>parametrize</code></li>
+        <li>Find the <b>example code</b>, copy the pattern, change the values</li>
+      </ul>
+      <div class="card green" style="margin-top:18px; padding:16px 20px"><p style="font-size:24px; margin:0"><b>Homework:</b> lots of Roman numerals to check? Look up <b>parametrize</b>: one test, a list of inputs.</p></div>
+    </div>
+    <div class="docs">
+      <div class="docs-tabs"><button type="button" data-src="https://docs.pytest.org/en/stable/how-to/assert.html" class="on">Assertions</button><button type="button" data-src="https://docs.pytest.org/en/stable/how-to/parametrize.html">Parametrize</button><button type="button" data-src="https://docs.pytest.org/en/stable/how-to/index.html">All how-to guides</button><a href="https://docs.pytest.org/en/stable/how-to/assert.html" target="_blank" rel="noopener">Open ↗</a></div>
+      <iframe src="https://docs.pytest.org/en/stable/how-to/assert.html" loading="lazy" title="docs.pytest.org documentation"></iframe>
+      <div class="url">https://docs.pytest.org/en/stable/how-to/assert.html</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>About 1 minute.</b> Show, don't read: click <b>Assertions</b>, scroll to <code>pytest.raises</code> (what we used for divide by zero). Click <b>Parametrize</b>: "one test, many inputs: handy for Roman Numerals." Click <b>All how-to guides</b>: "this is the menu; everything is here."</p>
+    <p>Say: "Nobody memorizes this. Developers look things up all day. Search for one word, find the example, copy the pattern."</p>
+    <p><b>Arrow keys:</b> after you click inside the docs, the arrows scroll the docs. Click the slide <b>outside</b> the docs (or use the presenter's Next) to move on.</p>
+  </aside>
+</section>
+
+<section class="slide" data-seg="Wrap up" data-at="39">
   <h2>Homework, Part I</h2>
   <p class="small" style="margin-bottom:10px">Top to bottom: each one is a little harder.</p>
   <ol class="small" style="padding-left:1.2em">
@@ -421,6 +453,17 @@ echo $?</pre>
 </section>
 
 </div>
+<script>
+  // "Find it in the docs" slide: the tab buttons switch the embedded page
+  document.querySelectorAll('.docs').forEach((d) => {
+    const frame = d.querySelector('iframe'), open = d.querySelector('.docs-tabs a'), url = d.querySelector('.url')
+    d.querySelectorAll('.docs-tabs button').forEach((b) => b.onclick = () => {
+      d.querySelectorAll('.docs-tabs button').forEach((x) => x.classList.toggle('on', x === b))
+      frame.src = open.href = url.textContent = b.dataset.src
+      b.blur()
+    })
+  })
+</script>
 <script src="../shared/deck.js?v=2"></script>
 <script src="../shared/codepad.js?v=3"></script>
 </body>

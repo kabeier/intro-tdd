@@ -8,6 +8,13 @@
 <link rel="stylesheet" href="../shared/codepad.css?v=3">
 <style>
   .cmdbox pre { font-size: 23px; padding: 18px 24px; }
+  .docs { display: flex; flex-direction: column; gap: 10px; }
+  .docs-tabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .docs-tabs button { font: 600 19px/1 Inter, system-ui, sans-serif; padding: 9px 14px; border-radius: 8px; border: 2px solid #1b2230; background: #fff; color: #1b2230; cursor: pointer; }
+  .docs-tabs button.on { background: #1b2230; color: #fff; }
+  .docs-tabs a { margin-left: auto; font: 600 18px Inter, system-ui, sans-serif; color: #2552c9; }
+  .docs iframe { width: 100%; height: 560px; border: 2px solid #1b2230; border-radius: 10px; background: #fff; }
+  .docs .url { font: 500 17px 'JetBrains Mono', monospace; color: #5b6577; }
 </style>
 </head>
 <body data-minutes="40">
@@ -353,6 +360,31 @@ echo $?</pre>
 </section>
 
 <section class="slide" data-seg="Wrap up" data-at="37">
+  <h2>The docs have the rest</h2>
+  <div class="cols" style="grid-template-columns: 0.75fr 1.5fr; gap:32px">
+    <div>
+      <ul class="small">
+        <li>Today was the <b>basics</b>. The docs show <b>every</b> matcher</li>
+        <li><b>Using Matchers</b>: start here (<code>toBe</code>, <code>toEqual</code>, <code>toContain</code>…)</li>
+        <li><b>Expect</b>: the full list (API menu)</li>
+        <li><b>Search</b> (top right, or Ctrl+K): one word, like <code>toThrow</code></li>
+      </ul>
+      <div class="card green" style="margin-top:18px; padding:16px 20px"><p style="font-size:24px; margin:0"><b>Homework:</b> Test my Calculator is pytest. Its <b>capsys</b> and <b>monkeypatch</b> pages are in the tabs.</p></div>
+    </div>
+    <div class="docs">
+      <div class="docs-tabs"><button type="button" data-src="https://jestjs.io/docs/using-matchers" class="on">Using Matchers</button><button type="button" data-src="https://jestjs.io/docs/expect">Expect (all)</button><button type="button" data-src="https://docs.pytest.org/en/stable/how-to/capture-stdout-stderr.html">pytest capsys</button><button type="button" data-src="https://docs.pytest.org/en/stable/how-to/monkeypatch.html">pytest monkeypatch</button><a href="https://jestjs.io/docs/using-matchers" target="_blank" rel="noopener">Open ↗</a></div>
+      <iframe src="https://jestjs.io/docs/using-matchers" loading="lazy" title="jestjs.io documentation"></iframe>
+      <div class="url">https://jestjs.io/docs/using-matchers</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>About 1 minute.</b> Show, don't read: <b>Using Matchers</b> (what we used today), then <b>Expect</b>: "every matcher, A to Z." Then the two pytest tabs for the Calculator homework.</p>
+    <p>Say: "Nobody memorizes this. Developers look things up all day. Search for one word, find the example, copy the pattern."</p>
+    <p><b>Arrow keys:</b> after you click inside the docs, the arrows scroll the docs. Click the slide <b>outside</b> the docs (or use the presenter's Next) to move on.</p>
+  </aside>
+</section>
+
+<section class="slide" data-seg="Wrap up" data-at="38">
   <h2>Homework, Part II</h2>
   <p class="small" style="margin-bottom:10px">Top to bottom: each one is a little harder.</p>
   <ol class="small" style="padding-left:1.2em">
@@ -367,6 +399,17 @@ echo $?</pre>
 </section>
 
 </div>
+<script>
+  // "Find it in the docs" slide: the tab buttons switch the embedded page
+  document.querySelectorAll('.docs').forEach((d) => {
+    const frame = d.querySelector('iframe'), open = d.querySelector('.docs-tabs a'), url = d.querySelector('.url')
+    d.querySelectorAll('.docs-tabs button').forEach((b) => b.onclick = () => {
+      d.querySelectorAll('.docs-tabs button').forEach((x) => x.classList.toggle('on', x === b))
+      frame.src = open.href = url.textContent = b.dataset.src
+      b.blur()
+    })
+  })
+</script>
 <script src="../shared/deck.js?v=2"></script>
 <script src="../shared/codepad.js?v=3"></script>
 </body>

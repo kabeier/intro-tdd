@@ -58,7 +58,8 @@ docker pull python:3.11-slim && docker pull node:18-alpine   # for the two Docke
 | 11 (30) | Codepad | monkeypatch + capsys, `pytest -v …` | "Name the fixture as a parameter, pytest hands it to you." |
 | 12 (35) | Deck | The Dockerfile: RUN vs CMD, `--no-cache-dir` | "Same tests, same Python, on every machine." |
 | 13 (36) | Codepad | Type the Dockerfile (or N). `docker build -t pytest-tests .`, `docker run --rm pytest-tests` → 8 passed, `echo $?` → 0. Step 2 breaks `example.py`: run **without** rebuilding → still 8 passed. Rebuild, run → 1 failed, `echo $?` → 1. Step 3 fixes it. R = build + run + echo | "COPY happens at build time: rebuild after every change." |
-| 14 (38) | Deck | Homework | "Run the tests before you write code." |
+| 14 (38) | Live docs | Click Assertions → scroll to `pytest.raises`; Parametrize; All how-to guides. Click outside the docs to use the arrows again | "Nobody memorizes this. Search one word, find the example, copy the pattern." |
+| 15 (39) | Deck | Homework | "Run the tests before you write code." |
 
 **Time check, Lecture 1:**
 - **Not at the activity (slide 9) by ~min 20:** skip the refactor step on slide 7 (say it, don't type it).
@@ -81,7 +82,8 @@ docker pull python:3.11-slim && docker pull node:18-alpine   # for the two Docke
 | 10 (26) | Codepad | Paste the grouped spec (or N), run; xtest; xdescribe | "Skip to focus. Don't commit skips by accident." |
 | 11 (32) | Your terminal | From a copy of demo-kit/tdd-jest/ (has .dockerignore): build, run, `echo $?` | "This is exactly what CI does." |
 | 12 (35) | Deck | CI pipeline | "The exit code is the gate." |
-| 13 (37) | Deck | Homework | "`npm install` first in the Jest repos." |
+| 13 (37) | Live docs | Using Matchers → Expect (all); then the pytest capsys / monkeypatch tabs for the Calculator. Click outside the docs to use the arrows again | "Nobody memorizes this. Search one word, find the example, copy the pattern." |
+| 14 (38) | Deck | Homework | "`npm install` first in the Jest repos." |
 
 **Time check, Lecture 2:**
 - **Not at the activity (slide 9) by ~min 22:** on slide 5, press **N** for the script edit and skip the "No tests found" run.
