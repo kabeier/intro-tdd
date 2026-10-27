@@ -84,7 +84,7 @@
     [
         "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">test_math.py</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">def test_float():\n    assert 0.1 + 0.2 == 0.3</pre>",
         "FAIL",
-        "Floating point: <code>0.1 + 0.2</code> is <code>0.30000000000000004</code>. Use <code>math.isclose</code>."
+        "Floating point: <code>0.1 + 0.2</code> is <code>0.30000000000000004</code>. Use <code>math.isclose</code>, which allows a tiny difference. This passes:<pre style=\"font:500 clamp(16px,1.8vw,22px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:12px 18px;border-radius:8px;white-space:pre;text-align:left;margin:10px 0 0;overflow-x:auto;max-width:100%;box-sizing:border-box\">import math\n\ndef test_float():\n    assert math.isclose(0.1 + 0.2, 0.3)</pre>"
     ],
     [
         "<span style=\"font:600 18px JetBrains Mono,monospace;color:#5b6577\">test_math.py</span><pre style=\"font:500 clamp(20px,2.3vw,30px)/1.4 JetBrains Mono,monospace;background:#1b2230;color:#e9edf5;padding:16px 22px;border-radius:8px;white-space:pre;text-align:left;margin:0;overflow-x:auto;max-width:100%;box-sizing:border-box\">import math\n\ndef test_close():\n    assert math.isclose(0.1 + 0.2, 0.3)</pre>",
