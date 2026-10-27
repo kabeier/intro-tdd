@@ -321,7 +321,7 @@ CMD ["pytest"]</code></pre><button type="button" class="copy">Copy</button></div
     <div class="cmdwrap"><pre class="cmd"><code>docker build -t pytest-tests .
 docker run --rm pytest-tests
 echo $?</code></pre><button type="button" class="copy">Copy</button></div>
-    <p><b>RUN</b> happens while building (installs pytest). <b>CMD</b> runs when the container starts: the whole suite, once. With the "jam" test still failing you get <code>1 failed</code> and exit code <b>1</b>. Fix it, <b>build again</b> (COPY happens at build time), run: exit code <b>0</b>.</p>
+    <p><b>RUN</b> happens while building (installs pytest). <b>CMD</b> runs when the container starts: the whole suite, once. You should see <code>8 passed</code> and exit code <b>0</b>. Then try this: in <code>example.py</code> change <code>+</code> to <code>-</code>, save, and run <b>without</b> building: still <code>8 passed</code> (the image has the old copy). Build again (COPY happens at build time), run: <code>1 failed, 7 passed</code>, exit code <b>1</b>. Change it back, build, run.</p>
   </section>
 
   <section>

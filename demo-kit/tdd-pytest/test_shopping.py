@@ -6,4 +6,4 @@ def test_divide_by_zero():
 
 def test_shopping_list():
     cart = ["milk", "eggs"]
-    assert sorted(cart) == ["eggs", "milk", "jam"]
+    assert sorted(cart) == ["eggs", "milk"]

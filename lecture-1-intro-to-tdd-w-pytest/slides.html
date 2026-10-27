@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lecture 1 · Intro to TDD with pytest</title>
 <link rel="stylesheet" href="../shared/deck.css">
-<link rel="stylesheet" href="../shared/codepad.css?v=2">
+<link rel="stylesheet" href="../shared/codepad.css?v=3">
 <style>
   .why { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin-top: 10px; }
   .why .card { padding: 20px 20px; }
@@ -208,6 +208,7 @@ def test_divide_by_zero():
 <script type="text/plain" data-file="test_shopping.py" data-step>def test_shopping_list():
     cart = ["milk", "eggs"]
     assert sorted(cart) == ["eggs", "milk", "jam"]</script>
+<script type="text/plain" data-file="test_shopping.py" data-step data-mode="replace" data-find=', "jam"]'>]</script>
   </div>
   <aside class="notes">
     <p><b>** CODE ALONG, about 6 minutes. **</b> Students: <code>test_assertions.py</code> and <code>test_shopping.py</code>. Run with <code>-v</code>: one line per test with its name. Two files in one command: pytest runs both.</p>
@@ -236,11 +237,12 @@ def test_divide_by_zero():
     cart = [&quot;milk&quot;, &quot;eggs&quot;]
     assert sorted(cart) == [&quot;eggs&quot;, &quot;milk&quot;, &quot;jam&quot;]</pre>
     <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>pytest -v test_assertions.py test_shopping.py</pre>
+    <p class="tf">Then in <b>test_shopping.py</b> change <code>[&quot;eggs&quot;, &quot;milk&quot;, &quot;jam&quot;]</code> to <code>[&quot;eggs&quot;, &quot;milk&quot;]</code>, save and run again.</p>
     </div>
     <ul>
       <li><code>math.isclose</code>: <code>0.1 + 0.2 == 0.3</code> is <b>False</b> in Python (floating point). Ask chat first.</li>
       <li><code>pytest.raises</code> checks that an error <b>does</b> happen. (The lesson's <code>assertRaises</code> / <code>assertEqual</code> are the <code>unittest</code> spellings; in pytest it's <code>pytest.raises</code> and plain <code>==</code>.)</li>
-      <li><b>The last step fails on purpose.</b> Read it together: <code>Right contains one more item: 'jam'</code>. Then remove <code>"jam"</code>, save, run → all green.</li>
+      <li><b>The last step fails on purpose.</b> Read it together: <code>Right contains one more item: 'jam'</code>. Then remove <code>"jam"</code> (step 5), save, run → all green.</li>
     </ul>
   </aside>
 </section>
@@ -340,12 +342,64 @@ echo $?</pre>
   </div>
   <p class="bottomline">Same Python, same pytest, on every laptop and in CI. Exit code 0 = green.</p>
   <aside class="notes">
-    <p><b>** YOUR DEMO, about 3 minutes. ** Students watch</b> (it's in Code Lab 1).</p>
+    <p><b>About 1 minute: explain the Dockerfile.</b> The demo is on the next slide.</p>
     <ul>
       <li>The Dockerfile is the curriculum's, word for word.</li>
       <li><b>--no-cache-dir</b>: normally pip saves a copy of every download (in <code>~/.cache/pip</code>) to reinstall faster next time. In an image there is no "next time", so it's dead weight. Tested: 22.7 MB vs 24.5 MB for this layer (the cache was 1.9 MB). Small here, big with many packages. It's a habit you'll see in most Python Dockerfiles.</li>
-      <li>Run it once with the "jam" test still failing: <code>1 failed</code>, <code>echo $?</code> → <b>1</b>. Fix it, <b>rebuild</b>, run → <b>0</b>. ("COPY happens at build time": same lesson as the Docker lecture.)</li>
       <li>"This is exactly what a CI server does on every push. Lecture 2 shows the picture."</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide pad" data-seg="Tests in a container" data-at="36">
+  <h2>Run the tests in Docker <span class="say">example.py · test_example.py · Dockerfile</span></h2>
+  <div class="vscode" data-folder="tdd-pytest" data-terminal="one" data-term-lines="15" data-font="15" data-run="docker build -t pytest-tests . | docker run --rm pytest-tests | echo $?">
+<script type="text/plain" data-file="example.py" data-start>def add_two_numbers(num_one, num_two):
+    return num_one + num_two</script>
+<script type="text/plain" data-file="test_example.py" data-start>from example import add_two_numbers
+
+def test_add_two_numbers():
+    assert add_two_numbers(2, 2) == 4</script>
+<script type="text/plain" data-file="Dockerfile" data-step>FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install --no-cache-dir pytest
+
+CMD ["pytest"]</script>
+<script type="text/plain" data-file="example.py" data-step data-mode="replace" data-find="num_one + num_two">num_one - num_two</script>
+<script type="text/plain" data-file="example.py" data-step data-mode="replace" data-find="num_one - num_two">num_one + num_two</script>
+  </div>
+  <aside class="notes">
+    <p><b>** YOUR DEMO, about 3 minutes. ** Students watch</b> (it's in Code Lab 1). <code>example.py</code> = the <b>code</b>, <code>test_example.py</code> = the <b>test</b>, <code>Dockerfile</code> = the <b>box</b> they run in. The other test files from today are in the folder too, so pytest runs all <b>8</b>.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf"><b>Dockerfile</b> (new file, no extension)</p>
+    <pre>FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install --no-cache-dir pytest
+
+CMD [&quot;pytest&quot;]</pre>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>docker build -t pytest-tests .
+docker run --rm pytest-tests
+echo $?</pre>
+    <p class="tf">Then in <b>example.py</b> change <code>num_one + num_two</code> to <code>num_one - num_two</code>, save, and run <b>without</b> rebuilding:</p><pre>docker run --rm pytest-tests</pre>
+    <p class="tf">Now rebuild and run:</p><pre>docker build -t pytest-tests .
+docker run --rm pytest-tests
+echo $?</pre>
+    <p class="tf">Then in <b>example.py</b> change it back to <code>num_one + num_two</code>, save, rebuild, run.</p>
+    </div>
+    <ul>
+      <li><b>Build</b> → the steps from the Dockerfile. <b>Run</b> → CMD runs <code>pytest</code> inside the box: <code>rootdir: /app</code>, <code>8 passed</code>. <code>echo $?</code> → <b>0</b>.</li>
+      <li><b>Break it</b>, run without rebuilding → <b>still 8 passed</b>. Ask chat: "Why?" (the image has the <b>old copy</b>: COPY happens at build time).</li>
+      <li><b>Rebuild</b>, run → <code>assert 0 == 4</code>, <code>1 failed, 7 passed</code>. <code>echo $?</code> → <b>1</b>: the container passes pytest's exit code out. That's what CI reads.</li>
+      <li>Fix it, rebuild, run → green again.</li>
+      <li><b>Backup:</b> N types the next step, R runs build + run + <code>echo $?</code>.</li>
     </ul>
   </aside>
 </section>
@@ -368,6 +422,6 @@ echo $?</pre>
 
 </div>
 <script src="../shared/deck.js"></script>
-<script src="../shared/codepad.js?v=2"></script>
+<script src="../shared/codepad.js?v=3"></script>
 </body>
 </html>

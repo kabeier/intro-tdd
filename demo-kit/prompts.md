@@ -30,7 +30,7 @@ def add_two_numbers(num_one, num_two):
     return num_one + num_two
 ```
 
-### Assertions (slide 10). The "jam" test fails on purpose; remove "jam" to go green.
+### Assertions (slide 10). The "jam" test fails on purpose; step 5 removes "jam" to go green.
 ```bash
 pytest -v test_assertions.py test_shopping.py
 ```
@@ -101,12 +101,17 @@ def test_printing(capsys):
     assert captured.out == "Hello, pytest!\n"
 ```
 
-### Docker demo (slide 12), from a copy of demo-kit/tdd-pytest/
+### Docker demo (slide 13, in the slide editor; or your terminal from a copy of demo-kit/tdd-pytest/)
 ```bash
 docker build -t pytest-tests .
-docker run --rm pytest-tests      # with "jam": 1 failed, 7 passed
+docker run --rm pytest-tests      # 8 passed (jam was removed on slide 10)
+echo $?                           # 0
+# example.py: change + to -, save. Run WITHOUT rebuilding:
+docker run --rm pytest-tests      # still 8 passed: the image has the old copy
+docker build -t pytest-tests .
+docker run --rm pytest-tests      # assert 0 == 4 · 1 failed, 7 passed
 echo $?                           # 1
-# remove "jam", then build again and run: 8 passed, exit 0
+# change it back, build, run: 8 passed
 ```
 
 **Dockerfile**

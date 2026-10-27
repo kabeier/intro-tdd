@@ -455,8 +455,11 @@
     'import sys, os, shutil, traceback, linecache',
     'sys.dont_write_bytecode = True',
     'sys.executable = "python3"',
+    '__cp_dirs = set()',
     'def __cp_files(files, folder):',
-    '    d = "/home/student/" + folder',
+    '    d = folder if folder.startswith("/") else "/home/student/" + folder',
+    '    if folder.startswith("/"):',
+    '        shutil.rmtree(d, ignore_errors=True)',
     '    os.makedirs(d, exist_ok=True)',
     '    for name, text in files.items():',
     '        p = os.path.join(d, name)',
@@ -464,12 +467,14 @@
     '        with open(p, "w") as fh:',
     '            fh.write(text)',
     '    os.chdir(d)',
-    '    if d in sys.path:',
-    '        sys.path.remove(d)',
+    '    __cp_dirs.add(d)',
+    '    for x in __cp_dirs:',
+    '        while x in sys.path:',
+    '            sys.path.remove(x)',
     '    sys.path.insert(0, d)',
     '    for k, m in list(sys.modules.items()):',
     '        f = getattr(m, "__file__", None) or ""',
-    '        if f.startswith(d):',
+    '        if any(f.startswith(x + "/") for x in __cp_dirs):',
     '            del sys.modules[k]',
     '    shutil.rmtree(os.path.join(d, "__pycache__"), ignore_errors=True)',
     '    linecache.clearcache()',
@@ -666,7 +671,7 @@
 
   // ---------- Two editor kinds with one small API ----------
   function monacoEditor(m, host, file, text, uri, hooks) {
-    const model = m.editor.createModel(text, langOf(file) === 'py' ? 'python' : 'javascript', m.Uri.parse(uri))
+    const model = m.editor.createModel(text, file.endsWith('.py') ? 'python' : file.endsWith('.json') ? 'json' : /^Dockerfile/.test(file) ? 'dockerfile' : 'javascript', m.Uri.parse(uri))
     model.updateOptions({ tabSize: langOf(file) === 'py' ? 4 : 2, indentSize: langOf(file) === 'py' ? 4 : 2, insertSpaces: true })
     const ed = m.editor.create(host, {
       model, theme: 'cp-dark', automaticLayout: true, minimap: { enabled: false }, scrollBeyondLastLine: false,
@@ -843,6 +848,83 @@
       })
     }
 
+    // ---- docker: a practice Docker. build = read the Dockerfile and SNAPSHOT the copied files; run = run CMD on that snapshot
+    // in a fresh WORKDIR. Edit a file without rebuilding and run shows the OLD result, like real Docker. Messages copied from real Docker.
+    async function docker(args) {
+      const images = (window.__cpImages ||= {})
+      const D = '\x1b[2m', R = '\x1b[22m'
+      const sub = args[0]
+      if (sub === 'build') {
+        let tag = null, file = 'Dockerfile'
+        for (let k = 1; k < args.length; k++) { if (args[k] === '-t') tag = args[++k]; else if (args[k] === '-f') file = args[++k] }
+        const text = pad.fsRead(file)
+        if (!text) { print('err', `ERROR: failed to build: failed to solve: failed to read dockerfile: open ${file}: no such file or directory`); lastExit = 1; return }
+        const img = { base: null, workdir: '/', files: {}, cmd: null, pytest: false }
+        const steps = []
+        for (const l of text.split('\n').map((x) => x.trim()).filter((x) => x && !x.startsWith('#'))) {
+          const [ins, ...rest] = l.split(/\s+/), arg = rest.join(' '), I = ins.toUpperCase()
+          if (I === 'FROM') { img.base = arg; steps.push(`FROM docker.io/library/${arg}`) }
+          else if (I === 'WORKDIR') { img.workdir = arg; steps.push(`WORKDIR ${arg}`) }
+          else if (I === 'COPY') {
+            const [src] = rest, all = pad.fsAll()
+            if (src === '.') Object.assign(img.files, all)
+            else if (all[src] !== undefined) img.files[src] = all[src]
+            else { print('err', `ERROR: failed to build: failed to solve: failed to compute cache key: "/${src}": not found`); lastExit = 1; return }
+            steps.push(`COPY ${arg}`)
+          } else if (I === 'RUN') { if (/pip3? install .*\bpytest\b/.test(arg)) img.pytest = true; steps.push(`RUN ${arg}`) }
+          else if (I === 'CMD') { try { img.cmd = JSON.parse(arg) } catch { img.cmd = arg.split(/\s+/) } }
+        }
+        if (!/^(node|python)/.test(img.base || '')) { sys('(This practice terminal can build node:… and python:… images.)'); lastExit = 1; return }
+        const prev = tag && images[tag]
+        const same = prev && JSON.stringify(prev.files) === JSON.stringify(img.files) && prev.base === img.base
+        const n = steps.length
+        print('out', '')
+        print('out', `[+] Building 0.4s (${n + 5}/${n + 5}) FINISHED`)
+        steps.forEach((st, k) => {
+          const cached = k > 0 && (st.startsWith('WORKDIR') || (same && !st.startsWith('FROM')))
+          print('out', `${D} => ${cached ? 'CACHED ' : ''}[${k + 1}/${n}] ${st}${R}`)
+        })
+        if (tag) print('out', `${D} => => naming to docker.io/library/${tag}${R}`)
+        if (!window.__cpDockerNoted) { window.__cpDockerNoted = true; sys('(Practice Docker in the slides: a real terminal prints more build lines, and pip prints its install the first time.)') }
+        if (tag) images[tag] = img
+        lastExit = 0
+        return
+      }
+      if (sub === 'run') {
+        let k = 1
+        while (k < args.length && args[k].startsWith('-')) k++
+        const name = args[k], rest = args.slice(k + 1)
+        if (!name) { print('err', '"docker run" requires at least 1 argument.'); lastExit = 1; return }
+        const img = images[name] || images[name.replace(/:latest$/, '')]
+        if (!img) {
+          ;[`Unable to find image '${name.includes(':') ? name : name + ':latest'}' locally`,
+            `docker: Error response from daemon: pull access denied for ${name.split(':')[0]}, repository does not exist or may require 'docker login': denied: requested access to the resource is denied`,
+            '', "Run 'docker run --help' for more information"].forEach((l) => print('err', l))
+          lastExit = 125; return
+        }
+        const argv = rest.length ? rest : img.cmd || []
+        const [prog, ...pargs] = argv
+        const root = img.workdir.replace(/\/$/, '') || '/'
+        const notFound = () => { print('err', `docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: "${prog}": executable file not found in $PATH: unknown`); lastExit = 127 }
+        if (prog === 'pytest' || prog === 'py.test') {
+          if (!img.pytest) return notFound()
+          return runJob('py', { t: 'pytest', files: img.files, folder: root, args: pargs, cols: cols() })
+        }
+        if (prog === 'python3' || prog === 'python') {
+          const file = pargs.find((a) => !a.startsWith('-'))
+          if (!file) { sys('(This practice terminal can run: pytest, or python3 <file>, inside the image.)'); lastExit = 1; return }
+          if (img.files[file] === undefined) { print('err', `${prog}: can't open file '${root}/${file}': [Errno 2] No such file or directory`); lastExit = 2; return }
+          return runJob('py', { t: 'run', files: img.files, folder: root, file })
+        }
+        if (!prog) { sys('(This image has no CMD. Add a command after the image name.)'); lastExit = 1; return }
+        if (!['node', 'npm', 'pytest', 'python3', 'python'].includes(prog)) return notFound()
+        sys('(This practice terminal can run: pytest, or python3 <file>, inside the image.)'); lastExit = 1
+        return
+      }
+      if (sub === 'images') { print('out', 'IMAGE'); Object.keys(images).forEach((n) => print('out', `${n}:latest`)); lastExit = 0; return }
+      sys('(This practice terminal knows: docker build -t <name> .  ·  docker run --rm <name>)'); lastExit = 1
+    }
+
     function npmTest(extra) {
       const text = pad.fsRead('package.json')
       if (!text) { // an empty, never-saved package.json = the file doesn't exist yet
@@ -911,7 +993,7 @@
         if (cmd === 'echo') { const s = args.join(' '); print('out', s === '$?' ? String(lastExit) : s.replace(/^["']|["']$/g, '')); return done() }
         if (cmd === 'cat') { const t = pad.fsRead(file); if (t === undefined) { print('err', `cat: ${file}: No such file or directory`); return done(1) } t.replace(/\n$/, '').split('\n').forEach((l) => print('out', l)); return done() }
         if (['cd', 'mkdir', 'code', 'touch'].includes(cmd)) { sys(`(This practice terminal stays in ${pad.folder}/. Create files in the editor.)`); return done() }
-        if (cmd === 'docker') { sys('(Docker isn\'t available in this practice terminal. Run Docker commands in your own terminal.)'); return done() }
+        if (cmd === 'docker') { await docker(args); return scroll() }
         if (cmd === 'pip' || cmd === 'pip3' || (isPy && args[0] === '-m' && args[1] === 'pip')) { sys('(Practice terminal: pytest is already installed here. In your own terminal this downloads and installs it.)'); return done() }
         if (cmd === 'pytest' || cmd === 'py.test' || (isPy && args[0] === '-m' && args[1] === 'pytest')) {
           const pargs = cmd === 'pytest' || cmd === 'py.test' ? args : args.slice(2)
@@ -1224,6 +1306,7 @@
         if (lines * lh + 28 + outLines * tlh + 46 + (lh >= 24 ? crumbH : 0) <= total) break // 28 = padding + a sideways scrollbar
       }
       fitted = { lh, font: Math.round(lh * 0.69) }
+      if (root.dataset.font) { fitted.font = Math.min(fitted.font, +root.dataset.font); fitted.lh = lh = Math.min(lh, Math.round(fitted.font * 1.45)) } // data-font: smaller code so 3 panes fit side by side
       root.style.setProperty('--vs-lh', lh + 'px')
       root.style.setProperty('--vs-font', fitted.font + 'px')
       root.style.setProperty('--vs-tlh', tlh + 'px')
@@ -1234,7 +1317,11 @@
       names.forEach((n) => ed[n].editor?.setFont(fitted.font, fitted.lh))
     }
 
-    names.forEach((n) => { ed[n].g.querySelector('.vs-run').onclick = async (ev) => { ev.currentTarget.blur(); await build(); save(n); ed[n].shell.typeAndRun(runCmd(n)) } })
+    names.forEach((n) => { ed[n].g.querySelector('.vs-run').onclick = async (ev) => {
+      ev.currentTarget.blur(); await build(); save(n)
+      if (/^Dockerfile/.test(n)) { for (const c of runList.length ? runList : ['docker build .']) await ed[n].shell.typeAndRun(c); return } // a Dockerfile runs as build + run
+      ed[n].shell.typeAndRun(runCmd(n))
+    } })
     $('.b-next').onclick = (ev) => { ev.currentTarget.blur(); next() }
     $('.b-runall').onclick = (ev) => { ev.currentTarget.blur(); runAll() }
     $('.b-all').onclick = (ev) => { ev.currentTarget.blur(); showAll() }

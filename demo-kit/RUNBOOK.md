@@ -54,10 +54,11 @@ docker pull python:3.11-slim && docker pull node:18-alpine   # for the two Docke
 | 7 (10) | Codepad | Type the test, run → **red** (ImportError), `echo $?` → 2. Type the function, run → **green**, `echo $?` → 0. Refactor, run → still green | "Red, green, refactor. That's the whole method." |
 | 8 (17) | Deck | Reading the output | "Dot, F, E. And the exit code is for computers." |
 | 9 (18) | Activity page | 6 cards | "PASS, FAIL or NOT FOUND in chat on go." |
-| 10 (24) | Codepad | Type both files, `pytest -v …` → one red ("jam"). Read it. Remove "jam", save, run → green | "pytest shows you the values. Read the E lines." |
+| 10 (24) | Codepad | Type both files, `pytest -v …` → one red ("jam"). Read it. Remove "jam" (step 5), save, run → green | "pytest shows you the values. Read the E lines." |
 | 11 (30) | Codepad | monkeypatch + capsys, `pytest -v …` | "Name the fixture as a parameter, pytest hands it to you." |
-| 12 (35) | Your terminal | `docker build -t pytest-tests .`, `docker run --rm pytest-tests`, `echo $?` (from a copy of demo-kit/tdd-pytest/) | "Same tests, same Python, on every machine." |
-| 13 (38) | Deck | Homework | "Run the tests before you write code." |
+| 12 (35) | Deck | The Dockerfile: RUN vs CMD, `--no-cache-dir` | "Same tests, same Python, on every machine." |
+| 13 (36) | Codepad | Type the Dockerfile (or N). `docker build -t pytest-tests .`, `docker run --rm pytest-tests` → 8 passed, `echo $?` → 0. Step 2 breaks `example.py`: run **without** rebuilding → still 8 passed. Rebuild, run → 1 failed, `echo $?` → 1. Step 3 fixes it. R = build + run + echo | "COPY happens at build time: rebuild after every change." |
+| 14 (38) | Deck | Homework | "Run the tests before you write code." |
 
 **Time check, Lecture 1:**
 - **Not at the activity (slide 9) by ~min 20:** skip the refactor step on slide 7 (say it, don't type it).
