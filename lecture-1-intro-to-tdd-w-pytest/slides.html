@@ -331,6 +331,7 @@ CMD ["pytest"]</pre></div>
       <ul class="small">
         <li><b>RUN</b> runs while <b>building</b> the image (install things). You can have many.</li>
         <li><b>CMD</b> runs when the <b>container starts</b>. Here: the test suite, once.</li>
+        <li><code>--no-cache-dir</code>: pip doesn't save a copy of its downloads → a <b>smaller image</b></li>
       </ul>
       <pre style="font-size:20px; margin-top:16px; padding:16px 22px">docker build -t pytest-tests .
 docker run --rm pytest-tests
@@ -342,6 +343,7 @@ echo $?</pre>
     <p><b>** YOUR DEMO, about 3 minutes. ** Students watch</b> (it's in Code Lab 1).</p>
     <ul>
       <li>The Dockerfile is the curriculum's, word for word.</li>
+      <li><b>--no-cache-dir</b>: normally pip saves a copy of every download (in <code>~/.cache/pip</code>) to reinstall faster next time. In an image there is no "next time", so it's dead weight. Tested: 22.7 MB vs 24.5 MB for this layer (the cache was 1.9 MB). Small here, big with many packages. It's a habit you'll see in most Python Dockerfiles.</li>
       <li>Run it once with the "jam" test still failing: <code>1 failed</code>, <code>echo $?</code> → <b>1</b>. Fix it, <b>rebuild</b>, run → <b>0</b>. ("COPY happens at build time": same lesson as the Docker lecture.)</li>
       <li>"This is exactly what a CI server does on every push. Lecture 2 shows the picture."</li>
     </ul>
