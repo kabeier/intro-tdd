@@ -214,11 +214,18 @@ xdescribe("tests factorial for large numbers", () => {
 });
 ```
 
-### Docker demo (slide 11), from a copy of demo-kit/tdd-jest/ (it has a .dockerignore with node_modules)
+### Docker demo (slide 12, in the slide editor; or your terminal from a copy of demo-kit/tdd-jest/, which has the .dockerignore)
 ```bash
+echo node_modules > .dockerignore
 docker build -t jest-tests .
 docker run --rm jest-tests        # PASS, Tests: 3 skipped, 1 passed
 echo $?                           # 0
+# factorial.js: let product = 1;  ->  let product = 0;  save. Run WITHOUT rebuilding:
+docker run --rm jest-tests        # still PASS: the image has the old copy
+docker build -t jest-tests .
+docker run --rm jest-tests        # FAIL · Expected: 1 · Received: 0 · Tests: 1 failed, 3 skipped
+echo $?                           # 1
+# change it back, build, run: PASS
 ```
 
 **Dockerfile**

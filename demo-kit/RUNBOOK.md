@@ -80,11 +80,12 @@ docker pull python:3.11-slim && docker pull node:18-alpine   # for the two Docke
 | 8 (19) | Deck | Reading Jest | "Read Expected and Received first." |
 | 9 (20) | Codepad | Paste the grouped spec (or N), run; xtest; xdescribe | "Skip to focus. Don't commit skips by accident." |
 | 10 (26) | Activity page | 6 cards | "toBe or toEqual: same thing, or same contents?" |
-| 11 (32) | Your terminal | From a copy of demo-kit/tdd-jest/ (has .dockerignore): build, run, `echo $?` | "This is exactly what CI does." |
-| 12 (35) | Deck | CI pipeline | "The exit code is the gate." |
-| 13 (37) | Live docs | Using Matchers → Expect (all); then the pytest capsys / monkeypatch tabs for the Calculator. Click outside the docs to use the arrows again | "Nobody memorizes this. Search one word, find the example, copy the pattern." |
-| 14 (38) | Deck | Homework | "`npm install` first in the Jest repos." |
+| 11 (32) | Deck | The Dockerfile: package.json first, then `npm install`; `.dockerignore` | "npm install only re-runs when package.json changes." |
+| 12 (33) | Codepad | `echo node_modules > .dockerignore`, type the Dockerfile (or N). Build, run → PASS (3 skipped, 1 passed), `echo $?` → 0. Step 2 `product = 0`: run **without** rebuilding → still PASS. Rebuild, run → FAIL, Expected 1 Received 0, `echo $?` → 1. Step 3 fixes it. R = .dockerignore + build + run + echo | "This is exactly what CI does." |
+| 13 (35) | Deck | CI pipeline | "The exit code is the gate." |
+| 14 (37) | Live docs | Using Matchers → Expect (all); then the pytest capsys / monkeypatch tabs for the Calculator. Click outside the docs to use the arrows again | "Nobody memorizes this. Search one word, find the example, copy the pattern." |
+| 15 (38) | Deck | Homework | "`npm install` first in the Jest repos." |
 
 **Time check, Lecture 2:**
 - **Not at the describe slide (slide 9) by ~min 22:** on slide 5, press **N** for the script edit and skip the "No tests found" run.
-- **Not at slide 11 by ~min 34:** show the Dockerfile and say what it does; students try it from Code Lab 2.
+- **Not at slide 12 by ~min 34:** press **R** once on slide 12 (build + run in one go); students try it from Code Lab 2.

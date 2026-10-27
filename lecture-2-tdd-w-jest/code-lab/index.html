@@ -416,7 +416,7 @@ CMD ["npm", "test"]</code></pre><button type="button" class="copy">Copy</button>
     <div class="cmdwrap"><pre class="cmd"><code>docker build -t jest-tests .
 docker run --rm jest-tests
 echo $?</code></pre><button type="button" class="copy">Copy</button></div>
-    <p>Same PASS output as on your laptop, and exit code 0. That exit code is what a CI pipeline checks before it lets anyone merge.</p>
+    <p>You should see <b>PASS</b>, <code>Tests: 3 skipped, 1 passed, 4 total</code>, and exit code <b>0</b>. Then try this: in <code>factorial.js</code> change <code>let product = 1;</code> to <code>let product = 0;</code>, save, and run <b>without</b> building: still PASS (the image has the old copy). Build again, run: <b>FAIL</b>, <code>Expected: 1</code>, <code>Received: 0</code>, exit code <b>1</b>. Change it back, build, run. That exit code is what a CI pipeline checks before it lets anyone merge.</p>
   </section>
 
   <section>

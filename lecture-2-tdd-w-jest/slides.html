@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lecture 2 · TDD with Jest</title>
 <link rel="stylesheet" href="../shared/deck.css">
-<link rel="stylesheet" href="../shared/codepad.css?v=3">
+<link rel="stylesheet" href="../shared/codepad.css?v=4">
 <style>
   .cmdbox pre { font-size: 23px; padding: 18px 24px; }
   .docs { display: flex; flex-direction: column; gap: 10px; }
@@ -342,10 +342,99 @@ echo $?</pre>
     </div>
   </div>
   <aside class="notes">
-    <p><b>** YOUR DEMO, about 3 minutes. **</b> The Dockerfile is the curriculum's, word for word.</p>
+    <p><b>About 1 minute: explain the Dockerfile.</b> The demo is on the next slide. The Dockerfile is the curriculum's, word for word.</p>
     <ul>
-      <li>Add a <code>.dockerignore</code> with <code>node_modules</code> first, so <code>COPY . .</code> doesn't copy your laptop's node_modules over the container's.</li>
-      <li>Run: same PASS output as on your laptop. <code>echo $?</code> → 0. Break a test, rebuild, run → 1.</li>
+      <li>Why package.json first: <code>npm install</code> only re-runs when package.json changes, so rebuilds after a code change are fast (Docker reuses that layer).</li>
+      <li>A <code>.dockerignore</code> with <code>node_modules</code> keeps your laptop's node_modules out of <code>COPY . .</code>. We make one on the next slide.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="slide pad" data-seg="Tests in a container" data-at="33">
+  <h2>Run the Jest tests in Docker <span class="say">factorial.js · factorial.spec.js · Dockerfile</span></h2>
+  <div class="vscode" data-folder="tdd-jest" data-terminal="one" data-term-lines="9" data-font="16" data-cols="0.9fr 1.45fr 0.75fr" data-run="echo node_modules &gt; .dockerignore | docker build -t jest-tests . | docker run --rm jest-tests | echo $?">
+<script type="text/plain" data-file="factorial.js" data-start>function factorial(num) {
+  let product = 1;
+
+  for (let i = num; i > 0; i--) {
+    product = product * i;
+  }
+
+  return product;
+}
+
+module.exports = factorial;</script>
+<script type="text/plain" data-file="factorial.spec.js" data-start>const factorial = require("./factorial.js");
+
+describe("tests factorial for small numbers", () => {
+  test("tests factorial(0) = 1", () => {
+    expect(factorial(0)).toBe(1);
+  });
+
+  xtest("tests factorial(3) = 6", () => {
+    expect(factorial(3)).toBe(6);
+  });
+});
+
+xdescribe("tests factorial for large numbers", () => {
+  test("tests factorial(10) = 3628800", () => {
+    expect(factorial(10)).toBe(3628800);
+  });
+
+  test("tests factorial(20) = 2432902008176640000", () => {
+    expect(factorial(20)).toBe(2432902008176640000);
+  });
+});</script>
+<script type="text/plain" data-file="Dockerfile" data-step>FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+RUN npm install --save-dev jest
+
+COPY . .
+
+CMD ["npm", "test"]</script>
+<script type="text/plain" data-file="factorial.js" data-step data-mode="replace" data-find="let product = 1;">let product = 0;</script>
+<script type="text/plain" data-file="factorial.js" data-step data-mode="replace" data-find="let product = 0;">let product = 1;</script>
+  </div>
+  <aside class="notes">
+    <p><b>** YOUR DEMO, about 3 minutes. ** Students watch</b> (it's in Code Lab 2). <code>factorial.js</code> = the <b>code</b>, <code>factorial.spec.js</code> = the <b>tests</b> (with the skips from slide 9), <code>Dockerfile</code> = the <b>box</b> they run in.</p>
+    <div class="typecode"><p class="th">TYPE THIS, in order</p>
+    <p class="tf">In the terminal first (keeps your laptop's node_modules out of the image):</p><pre>echo node_modules &gt; .dockerignore</pre>
+    <p class="tf"><b>Dockerfile</b> (new file, no extension)</p>
+    <pre>FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+RUN npm install --save-dev jest
+
+COPY . .
+
+CMD [&quot;npm&quot;, &quot;test&quot;]</pre>
+    <p class="tf"><b>Ctrl+S</b>, then in the terminal:</p><pre>docker build -t jest-tests .
+docker run --rm jest-tests
+echo $?</pre>
+    <p class="tf">Then in <b>factorial.js</b> change <code>let product = 1;</code> to <code>let product = 0;</code>, save, and run <b>without</b> rebuilding:</p><pre>docker run --rm jest-tests</pre>
+    <p class="tf">Now rebuild and run:</p><pre>docker build -t jest-tests .
+docker run --rm jest-tests
+echo $?</pre>
+    <p class="tf">Then change it back to <code>let product = 1;</code>, save, rebuild, run.</p>
+    </div>
+    <ul>
+      <li><b>Build</b> → each Dockerfile step. package.json is copied <b>first</b> and <code>npm install</code> runs, so Jest is inside the image. Then <code>COPY . .</code> brings the code and tests.</li>
+      <li><b>Run</b> → CMD runs <code>npm test</code> in the box: <b>PASS</b>, <code>Tests: 3 skipped, 1 passed, 4 total</code>. <code>echo $?</code> → <b>0</b>.</li>
+      <li><b>Break it</b> (<code>product = 0</code>), run without rebuilding → <b>still PASS</b>. Ask chat: "Why?" (the image has the <b>old copy</b>).</li>
+      <li><b>Rebuild</b>, run → <b>FAIL</b>, <b>Expected: 1, Received: 0</b>. <code>echo $?</code> → <b>1</b>. That's what CI reads (next slide).</li>
+      <li>Fix it, rebuild, run → PASS.</li>
+      <li><b>Backup:</b> N types the next step, R runs the .dockerignore line + build + run + <code>echo $?</code>. Same results as real Docker (checked with node:18-alpine).</li>
     </ul>
   </aside>
 </section>
@@ -411,6 +500,6 @@ echo $?</pre>
   })
 </script>
 <script src="../shared/deck.js?v=2"></script>
-<script src="../shared/codepad.js?v=3"></script>
+<script src="../shared/codepad.js?v=4"></script>
 </body>
 </html>

@@ -143,7 +143,8 @@
     // CommonJS modules over the slide's files
     function makeLoader(files, folder, con, extra) {
       const cache = {}
-      const abs = (f) => `/home/student/${folder}/${f}`
+      const dir = folder.startsWith('/') ? folder : `/home/student/${folder}`
+      const abs = (f) => `${dir}/${f}`
       const norm = (p) => { const out = []; for (const s of p.split('/')) { if (!s || s === '.') continue; if (s === '..') out.pop(); else out.push(s) } return out.join('/') }
       const resolve = (from, spec) => {
         if (!/^\.{1,2}\//.test(spec)) return null
@@ -164,7 +165,7 @@
           if (r === null) { const e = new Error(`Cannot find module '${spec}'`); e.code = 'MODULE_NOT_FOUND'; e.spec = spec; e.from = file; throw e }
           return load(r)
         }
-        fn(req, module, module.exports, abs(file), `/home/student/${folder}`, con, ...Object.values(extra))
+        fn(req, module, module.exports, abs(file), dir, con, ...Object.values(extra))
         return module.exports
       }
       return { load, abs }
@@ -382,7 +383,7 @@
       const specs = Object.keys(d.files).filter(isSpec).filter((f) => !filter || filter.test(f)).sort()
       if (!specs.length) {
         const nf = Object.keys(d.files).length, nSpec = Object.keys(d.files).filter(isSpec).length
-        ;['No tests found, exiting with code 1', 'Run with `--passWithNoTests` to exit with code 0', `In /home/student/${d.folder}`, `  ${nf} files checked.`,
+        ;['No tests found, exiting with code 1', 'Run with `--passWithNoTests` to exit with code 0', `In ${d.folder.startsWith('/') ? d.folder : '/home/student/' + d.folder}`, `  ${nf} files checked.`,
           `  testMatch: **/__tests__/**/*.?([mc])[jt]s?(x), **/?(*.)+(spec|test).?([mc])[jt]s?(x) - ${nSpec} matches`,
           `  testPathIgnorePatterns: /node_modules/ - ${nf} matches`, '  testRegex:  - 0 matches', `Pattern: ${d.filter || ''} - 0 matches`].forEach((l) => emit('out', l))
         return 1
@@ -859,7 +860,9 @@
         for (let k = 1; k < args.length; k++) { if (args[k] === '-t') tag = args[++k]; else if (args[k] === '-f') file = args[++k] }
         const text = pad.fsRead(file)
         if (!text) { print('err', `ERROR: failed to build: failed to solve: failed to read dockerfile: open ${file}: no such file or directory`); lastExit = 1; return }
-        const img = { base: null, workdir: '/', files: {}, cmd: null, pytest: false }
+        const img = { base: null, workdir: '/', files: {}, cmd: null, pytest: false, npm: false, jest: false }
+        const ignore = (pad.fsRead('.dockerignore') || '').split('\n').map((x) => x.trim()).filter((x) => x && !x.startsWith('#'))
+        const glob = (g) => new RegExp('^' + g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$')
         const steps = []
         for (const l of text.split('\n').map((x) => x.trim()).filter((x) => x && !x.startsWith('#'))) {
           const [ins, ...rest] = l.split(/\s+/), arg = rest.join(' '), I = ins.toUpperCase()
@@ -867,11 +870,18 @@
           else if (I === 'WORKDIR') { img.workdir = arg; steps.push(`WORKDIR ${arg}`) }
           else if (I === 'COPY') {
             const [src] = rest, all = pad.fsAll()
+            for (const f of Object.keys(all)) if (ignore.some((g) => glob(g).test(f))) delete all[f]
+            const hits = Object.keys(all).filter((f) => glob(src).test(f))
             if (src === '.') Object.assign(img.files, all)
-            else if (all[src] !== undefined) img.files[src] = all[src]
+            else if (hits.length) hits.forEach((f) => (img.files[f] = all[f]))
+            else if (/[*?]/.test(src)) {} // a glob that matches nothing is fine (package*.json without a lock file)
             else { print('err', `ERROR: failed to build: failed to solve: failed to compute cache key: "/${src}": not found`); lastExit = 1; return }
             steps.push(`COPY ${arg}`)
-          } else if (I === 'RUN') { if (/pip3? install .*\bpytest\b/.test(arg)) img.pytest = true; steps.push(`RUN ${arg}`) }
+          } else if (I === 'RUN') {
+            if (/pip3? install .*\bpytest\b/.test(arg)) img.pytest = true
+            if (/^npm (install|i|ci)\b/.test(arg)) { if (!img.files['package.json']) { print('err', `ERROR: failed to build: failed to solve: process "/bin/sh -c ${arg}" did not complete successfully: exit code: 254`); lastExit = 1; return } img.npm = true; if (/\bjest\b/.test(arg)) img.jest = true }
+            steps.push(`RUN ${arg}`)
+          }
           else if (I === 'CMD') { try { img.cmd = JSON.parse(arg) } catch { img.cmd = arg.split(/\s+/) } }
         }
         if (!/^(node|python)/.test(img.base || '')) { sys('(This practice terminal can build node:… and python:… images.)'); lastExit = 1; return }
@@ -885,7 +895,7 @@
           print('out', `${D} => ${cached ? 'CACHED ' : ''}[${k + 1}/${n}] ${st}${R}`)
         })
         if (tag) print('out', `${D} => => naming to docker.io/library/${tag}${R}`)
-        if (!window.__cpDockerNoted) { window.__cpDockerNoted = true; sys('(Practice Docker in the slides: a real terminal prints more build lines, and pip prints its install the first time.)') }
+        if (!window.__cpDockerNoted) { window.__cpDockerNoted = true; sys('(Practice Docker in the slides: a real terminal prints more build lines, and pip / npm print their installs the first time.)') }
         if (tag) images[tag] = img
         lastExit = 0
         return
@@ -916,20 +926,32 @@
           if (img.files[file] === undefined) { print('err', `${prog}: can't open file '${root}/${file}': [Errno 2] No such file or directory`); lastExit = 2; return }
           return runJob('py', { t: 'run', files: img.files, folder: root, file })
         }
+        if (prog === 'npm' && ['test', 't'].includes(pargs[0])) {
+          const imgFs = { read: (f) => img.files[f], all: () => img.files, folder: root, path: root,
+            jest: (deps) => img.jest || (img.npm && !!deps.jest), notFound: 'sh: jest: not found' }
+          return npmTest(pargs.slice(1).filter((a) => a !== '--'), imgFs)
+        }
+        if (prog === 'node') {
+          const file = pargs.find((a) => !a.startsWith('-'))
+          if (!file || img.files[file] === undefined) { print('err', `Error: Cannot find module '${root}/${file || ''}'`); lastExit = 1; return }
+          return runJob('js', { t: 'node', files: img.files, folder: root, entry: file })
+        }
         if (!prog) { sys('(This image has no CMD. Add a command after the image name.)'); lastExit = 1; return }
         if (!['node', 'npm', 'pytest', 'python3', 'python'].includes(prog)) return notFound()
-        sys('(This practice terminal can run: pytest, or python3 <file>, inside the image.)'); lastExit = 1
+        sys('(This practice terminal can run: pytest, python3 <file>, npm test or node <file> inside the image.)'); lastExit = 1
         return
       }
       if (sub === 'images') { print('out', 'IMAGE'); Object.keys(images).forEach((n) => print('out', `${n}:latest`)); lastExit = 0; return }
       sys('(This practice terminal knows: docker build -t <name> .  ·  docker run --rm <name>)'); lastExit = 1
     }
 
-    function npmTest(extra) {
-      const text = pad.fsRead('package.json')
+    // fs: where npm looks. The host folder by default; docker run passes the image's files instead
+    const hostFs = { read: (f) => pad.fsRead(f), all: () => pad.fsAll(), get folder() { return pad.folder }, get path() { return `/home/student/${pad.folder}` }, jest: (deps) => !!deps.jest, notFound: 'sh: jest: command not found' }
+    function npmTest(extra, fs = hostFs) {
+      const text = fs.read('package.json')
       if (!text) { // an empty, never-saved package.json = the file doesn't exist yet
-        ;['npm error code ENOENT', 'npm error syscall open', `npm error path /home/student/${pad.folder}/package.json`, 'npm error errno -2',
-          `npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/home/student/${pad.folder}/package.json'`,
+        ;['npm error code ENOENT', 'npm error syscall open', `npm error path ${fs.path}/package.json`, 'npm error errno -2',
+          `npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '${fs.path}/package.json'`,
           'npm error enoent This is related to npm not being able to find a file.'].forEach((l) => print('err', l))
         lastExit = 254; return
       }
@@ -940,13 +962,13 @@
       ;['', `> ${pkg.name}@${pkg.version} test`, `> ${script}${extra.length ? ' ' + extra.join(' ') : ''}`, ''].forEach((l) => print('out', l))
       if (/^jest(\s|$)/.test(script)) {
         const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) }
-        if (!deps.jest) { print('err', 'sh: jest: command not found'); lastExit = 127; return }
-        return runJest([...script.split(/\s+/).slice(1), ...extra])
+        if (!fs.jest(deps)) { print('err', fs.notFound); lastExit = 127; return }
+        return runJest([...script.split(/\s+/).slice(1), ...extra], fs)
       }
       if (/Error: no test specified/.test(script)) { print('out', 'Error: no test specified'); lastExit = 1; return }
       sys('(This practice terminal can only run "jest" as the test script.)'); lastExit = 1
     }
-    const runJest = (args) => runJob('js', { t: 'jest', files: pad.fsAll(), folder: pad.folder, filter: args.find((a) => !a.startsWith('-')) || '' })
+    const runJest = (args, fs = hostFs) => runJob('js', { t: 'jest', files: fs.all(), folder: fs.folder, filter: args.find((a) => !a.startsWith('-')) || '' })
 
     function npmInit() {
       const old = pad.fsRead('package.json')
@@ -990,7 +1012,11 @@
         if (cmd === 'clear') { shell.clear(); return done() }
         if (cmd === 'ls') { print('out', pad.files().join('  ')); return done() }
         if (cmd === 'pwd') { print('out', `/home/student/${pad.folder}`); return done() }
-        if (cmd === 'echo') { const s = args.join(' '); print('out', s === '$?' ? String(lastExit) : s.replace(/^["']|["']$/g, '')); return done() }
+        if (cmd === 'echo') {
+          const gt = args.indexOf('>'), s = (gt >= 0 ? args.slice(0, gt) : args).join(' '), text = s === '$?' ? String(lastExit) : s.replace(/^["']|["']$/g, '')
+          if (gt >= 0 && args[gt + 1]) { pad.fsWrite(args[gt + 1], text + '\n'); return done() } // echo node_modules > .dockerignore
+          print('out', text); return done()
+        }
         if (cmd === 'cat') { const t = pad.fsRead(file); if (t === undefined) { print('err', `cat: ${file}: No such file or directory`); return done(1) } t.replace(/\n$/, '').split('\n').forEach((l) => print('out', l)); return done() }
         if (['cd', 'mkdir', 'code', 'touch'].includes(cmd)) { sys(`(This practice terminal stays in ${pad.folder}/. Create files in the editor.)`); return done() }
         if (cmd === 'docker') { await docker(args); return scroll() }
@@ -1306,6 +1332,7 @@
         if (lines * lh + 28 + outLines * tlh + 46 + (lh >= 24 ? crumbH : 0) <= total) break // 28 = padding + a sideways scrollbar
       }
       fitted = { lh, font: Math.round(lh * 0.69) }
+      if (root.dataset.cols) root.querySelector('.vs-groups').style.gridTemplateColumns = root.dataset.cols // data-cols: pane widths, e.g. "1fr 1.4fr .8fr"
       if (root.dataset.font) { fitted.font = Math.min(fitted.font, +root.dataset.font); fitted.lh = lh = Math.min(lh, Math.round(fitted.font * 1.45)) } // data-font: smaller code so 3 panes fit side by side
       root.style.setProperty('--vs-lh', lh + 'px')
       root.style.setProperty('--vs-font', fitted.font + 'px')
