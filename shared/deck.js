@@ -73,11 +73,11 @@
     i = Math.min(Math.max(n, 0), total - 1)
     slides.forEach((s, k) => s.classList.toggle('active', k === i))
     history.replaceState(null, '', '#' + (i + 1))
-    if (!fromRemote) channel.postMessage({ type: 'go', i })
+    if (!fromRemote) channel.postMessage({ type: 'go', i, total })
   }
   channel.onmessage = (e) => {
     if (e.data.type === 'go' && e.data.i !== i) go(e.data.i, true)
-    if (e.data.type === 'hello') channel.postMessage({ type: 'go', i }) // presenter window just opened
+    if (e.data.type === 'hello') channel.postMessage({ type: 'go', i, total }) // presenter window just opened
   }
 
   addEventListener('keydown', (e) => {
@@ -142,7 +142,11 @@
       c.className = 'clock ' + (m > targetMin(slides[i]) + 3 ? 'late' : 'ok')
     }
     const go2 = (n) => { i = Math.min(Math.max(n, 0), total - 1); channel.postMessage({ type: 'go', i }); draw() }
-    channel.onmessage = (e) => { if (e.data.type === 'go') { i = e.data.i; draw() } }
+    channel.onmessage = (e) => {
+      if (e.data.type !== 'go') return
+      if (e.data.total && e.data.total !== total) return location.reload() // the deck changed since this window opened: load the new one
+      i = e.data.i; draw()
+    }
     $('#prev').onclick = () => go2(i - 1); $('#nextb').onclick = () => go2(i + 1)
     $('#clockb').onclick = toggleClock
     $('#resetb').onclick = () => writeClock({ start: null, paused: 0, pausedAt: null })
