@@ -16,6 +16,7 @@
   .lede { max-width: 60ch; color: var(--muted); font-size: 20px; margin: 0 0 48px; }
   .lectures { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; }
   section { background: #fff; border: 2px solid var(--ink); border-radius: 4px; padding: 28px; }
+  .date { display: inline-block; font: 700 17px 'Atkinson Hyperlegible', sans-serif; background: var(--ink); color: #fff; padding: 4px 12px; border-radius: 3px; margin: 0 0 14px; }
   .num { font: 800 64px/1 'Bricolage Grotesque', sans-serif; color: var(--blue); }
   h2 { font: 800 30px/1.1 'Bricolage Grotesque', sans-serif; margin: 8px 0 6px; letter-spacing: -0.01em; }
   section > p { margin: 0 0 22px; color: var(--muted); }
@@ -62,6 +63,7 @@
 </head>
 <body>
 <main>
+  <p class="date">📅 Wednesday, October 28, 2026</p>
   <h1>Test Driven Development</h1>
   <p class="lede">Write the test first, watch it fail, then make it pass. Lecture 1 does it in Python with pytest, Lecture 2 in JavaScript with Jest, and both run the tests in a Docker container the way a CI pipeline does. You type every line along with the slides. Everything opens in a new tab, so keep this page open as your home base.</p>
 
